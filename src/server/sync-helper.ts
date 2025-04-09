@@ -3,6 +3,7 @@ import oauth2Client from "@/server/auth/oauth2Client";
 import { db } from "@/server/db";
 import { type gmail_v1 } from "googleapis/build/src/apis/gmail";
 import { simpleParser, type ParsedMail } from "mailparser";
+import { toByteArray } from "base64-js";
 
 export async function getSyncStatus(accountId: string) {
   const syncStatus = await db.syncStatus.findUnique({
@@ -71,40 +72,59 @@ export async function processHistories(
   gmail: gmail_v1.Gmail,
   histories: gmail_v1.Schema$History[],
 ) {
-  const messagesToProcess = new Set<string>();
+  const threadIds = new Set<string>();
+  const messageIds = new Set<string>();
 
   for (const history of histories) {
     if (history.messagesAdded) {
       for (const message of history.messagesAdded) {
-        messagesToProcess.add(message.message?.id ?? "");
+        threadIds.add(message.message?.threadId ?? "");
       }
     }
   }
 
-  if (messagesToProcess.size > 0) {
-    const messageIds = Array.from(messagesToProcess);
-    const messages = await Promise.all(
-      messageIds.map(async (messageId) => {
-        const message = await gmail.users.messages.get({
+  if (threadIds.size > 0) {
+    const threadIdsArray = Array.from(threadIds);
+
+    await Promise.all(
+      threadIdsArray.map(async (threadId) => {
+        const thread = await gmail.users.threads.get({
           userId: "me",
-          id: messageId,
-          format: "raw",
+          id: threadId,
+          format: "metadata",
         });
-        return message;
+        thread.data?.messages?.forEach((m) => m.id && messageIds.add(m.id));
       }),
     );
+  }
 
-    for (const message of messages) {
+  if (messageIds.size > 0) {
+    const messageIdsArray = Array.from(messageIds);
+    console.log("messageIdsArray", messageIdsArray);
+
+    for (const messageId of messageIdsArray) {
+      const message = await gmail.users.messages.get({
+        userId: "me",
+        id: messageId,
+        format: "raw",
+      });
+      // console.log("message", message);
       const rawMessage = message.data?.raw;
-      if (!rawMessage) continue;
+      if (!rawMessage) return;
 
-      const parsed: ParsedMail = await simpleParser(rawMessage);
+      const bytes = toByteArray(rawMessage);
+      const decodedMessage = Buffer.from(bytes).toString("utf-8");
+
+      const parsed: ParsedMail = await simpleParser(decodedMessage);
+
       const attachments = parsed.attachments;
       if (attachments.length > 0) {
         const pdfAttachment = attachments.find(
           (attachment) => attachment.contentType === "application/pdf",
         );
-        console.log("pdf detected");
+        if (pdfAttachment) {
+          console.log("pdf detected");
+        }
       }
     }
   }
