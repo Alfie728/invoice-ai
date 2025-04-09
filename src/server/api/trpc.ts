@@ -10,7 +10,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import oauth2client from "@/server/auth/oauth2Client";
+import oauth2Client from "@/server/auth/oauth2Client";
 import { google } from "googleapis";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
@@ -33,10 +33,10 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   return {
     db,
     session,
-    oauth2client,
+    oauth2Client,
     gmail: google.gmail({
       version: "v1",
-      auth: oauth2client,
+      auth: oauth2Client,
     }),
     ...opts,
   };
@@ -127,7 +127,7 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (!ctx.session?.user) {
+    if (!ctx.session || !ctx.session.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
     return next({
@@ -140,7 +140,7 @@ export const protectedProcedure = t.procedure
   .use(async ({ ctx, next }) => {
     // Set oauth2Client credentials if user is authenticated and has an access token
     if (ctx.session?.accessToken) {
-      ctx.oauth2client.setCredentials({
+      ctx.oauth2Client.setCredentials({
         access_token: ctx.session.accessToken,
       });
     } else if (ctx.session && ctx.session.user) {
@@ -157,7 +157,7 @@ export const protectedProcedure = t.procedure
       });
 
       if (account?.access_token) {
-        ctx.oauth2client.setCredentials({
+        ctx.oauth2Client.setCredentials({
           access_token: account.access_token,
         });
       }

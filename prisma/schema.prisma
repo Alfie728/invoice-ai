@@ -16,7 +16,7 @@ datasource db {
 
 // Necessary for Next auth
 model Account {
-    id                       String  @id @default(cuid())
+    id                       String       @id @default(cuid())
     userId                   String
     type                     String
     provider                 String
@@ -28,8 +28,9 @@ model Account {
     scope                    String?
     id_token                 String? // @db.Text
     session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user                     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
     refresh_token_expires_in Int?
+    syncStatus               SyncStatus[]
 
     @@unique([provider, providerAccountId])
 }
@@ -50,6 +51,16 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
+}
+
+model SyncStatus {
+    accountId       String    @id
+    account         Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+    // Sync Information
+    lastSyncedAt    DateTime?
+    lastHistoryId   String?
+    // Watch Information
+    watchExpiration DateTime?
 }
 
 model InvoiceSender {
