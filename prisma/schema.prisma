@@ -52,10 +52,97 @@ model User {
     sessions      Session[]
 }
 
-model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+model InvoiceSender {
+    id              String    @id @default(cuid())
+    name            String
+    emailAddress    String    @unique
+    invoices        Invoice[]
+    createdAt       DateTime  @default(now())
+    lastInvoiceSent DateTime?
 
-    @@unique([identifier, token])
+    @@index([name]) // Add index for searching by sender name
+}
+
+model Invoice {
+    id              String            @id @default(cuid())
+    createdAt       DateTime          @default(now())
+    updatedAt       DateTime          @updatedAt
+    // Status of the invoice 
+    invoiceStatus   InvoiceStatus     @default(PENDING)
+    // Invoice Information
+    invoiceNumber   String
+    invoiceDate     DateTime
+    invoiceDueDate  DateTime? // Made optional as not all invoices have due dates
+    vendorName      String
+    taxAmount       Float? // Made optional as not all invoices have tax
+    subTotalAmount  Float
+    totalAmount     Float
+    // Coding Information
+    vendorCode      String? // Made optional as might not be available for all vendors
+    propertyCode    String? // Made optional as might not apply to all invoices
+    invoiceAmount   Float // Consider removing if redundant with totalAmount
+    invoiceCurrency InvoiceCurrency   @default(USD) // Added default value
+    apAccount       String? // Made optional as might not be available initially
+    cashAccount     String? // Made optional as might not be available initially
+    expenseType     String? // Made optional as might not be available initially
+    // Line Items
+    invoiceLineItem InvoiceLineItem[]
+    // Relations
+    invoiceSender   InvoiceSender?    @relation(fields: [invoiceSenderId], references: [id])
+    invoiceSenderId String? // Foreign key to InvoiceSender
+
+    @@index([invoiceStatus]) // Index status for filtering
+    @@index([invoiceDate]) // Index date for sorting and filtering
+    @@index([vendorName]) // Index vendor name for searching
+}
+
+model InvoiceLineItem {
+    id          String   @id @default(cuid())
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    // Line Item Information
+    description String
+    quantity    Float
+    unitPrice   Float
+    amount      Float
+    glCode      String? // Made optional as might not be available for all items
+    // Relations
+    invoiceId   String
+    invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade) // Added cascade delete
+
+    @@index([invoiceId]) // Index for faster joins
+}
+
+enum InvoiceStatus {
+    PENDING
+    APPROVED // Renamed from ACCEPTED for clarity
+    REJECTED
+}
+
+enum InvoiceCurrency {
+    USD
+    CAD
+    EUR
+    GBP
+    AUD
+    NZD
+    CHF
+    JPY
+    CNY
+    INR
+    MXN
+    BRL
+    ARS
+    COP
+    PHP
+    IDR
+    ZAR
+    RUB
+    KRW
+    HKD
+    SGD
+    MYR
+    BDT
+    PKR
+    SAR
 }
