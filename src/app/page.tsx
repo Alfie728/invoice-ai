@@ -6,28 +6,26 @@ import { api } from "@/trpc/server";
 export default async function Home() {
   const session = await auth();
 
-  // // Use the new syncIfNeeded method
-  // if (session) {
-  //   await api.sync.startInitialSync();
-  //   await api.sync.setupGmailWatch({
-  //     labelIds: [
-  //       "CATEGORY_FORUMS",
-  //       "CATEGORY_PERSONAL",
-  //       "CATEGORY_PROMOTIONS",
-  //       "CATEGORY_SOCIAL",
-  //       "CATEGORY_UPDATES",
-  //       "CHAT",
-  //       "DRAFT",
-  //       "IMPORTANT",
-  //       "INBOX",
-  //       "SENT",
-  //       "SPAM",
-  //       "STARRED",
-  //       "TRASH",
-  //       "UNREAD",
-  //     ],
-  //   });
-  // }
+  if (session) {
+    await api.sync.startWatching({
+      labelIds: [
+        "CATEGORY_FORUMS",
+        "CATEGORY_PERSONAL",
+        "CATEGORY_PROMOTIONS",
+        "CATEGORY_SOCIAL",
+        "CATEGORY_UPDATES",
+        "CHAT",
+        "DRAFT",
+        "IMPORTANT",
+        "INBOX",
+        "SENT",
+        "SPAM",
+        "STARRED",
+        "TRASH",
+        "UNREAD",
+      ],
+    });
+  }
 
   return (
     <HydrateClient>

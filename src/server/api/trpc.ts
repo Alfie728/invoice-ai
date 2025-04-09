@@ -33,6 +33,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   return {
     db,
     session,
+    oauth2client,
     gmail: google.gmail({
       version: "v1",
       auth: oauth2client,
@@ -134,5 +135,35 @@ export const protectedProcedure = t.procedure
         // infers the `session` as non-nullable
         session: { ...ctx.session, user: ctx.session.user },
       },
+    });
+  })
+  .use(async ({ ctx, next }) => {
+    // Set oauth2Client credentials if user is authenticated and has an access token
+    if (ctx.session?.accessToken) {
+      ctx.oauth2client.setCredentials({
+        access_token: ctx.session.accessToken,
+      });
+    } else if (ctx.session && ctx.session.user) {
+      // If no accessToken in session, this is a fallback that should rarely be needed
+      console.warn("No accessToken in session, falling back to database query");
+      const account = await ctx.db.account.findFirst({
+        where: {
+          userId: ctx.session.user.id,
+          provider: "google",
+        },
+        select: {
+          access_token: true,
+        },
+      });
+
+      if (account?.access_token) {
+        ctx.oauth2client.setCredentials({
+          access_token: account.access_token,
+        });
+      }
+    }
+
+    return next({
+      ctx,
     });
   });
