@@ -1,18 +1,26 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { BarChart, FileText, Home, Menu, Settings, Users, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { cn } from "@/lib/utils"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  BarChart,
+  FileText,
+  Home,
+  Menu,
+  Settings,
+  Users,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
-  title: string
-  href: string
-  icon: React.ComponentType<{ className?: string }>
+  title: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 const navItems: NavItem[] = [
@@ -41,12 +49,12 @@ const navItems: NavItem[] = [
     href: "/settings",
     icon: Settings,
   },
-]
+];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
+      <header className="bg-background sticky top-0 z-40 border-b">
         <div className="container flex h-16 items-center justify-between py-4">
           <div className="flex items-center gap-2">
             <Sheet>
@@ -58,7 +66,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               </SheetTrigger>
               <SheetContent side="left" className="w-72">
                 <div className="flex items-center border-b pb-4">
-                  <Link href="/" className="flex items-center gap-2 font-semibold">
+                  <Link
+                    href="/"
+                    className="flex items-center gap-2 font-semibold"
+                  >
                     <FileText className="h-6 w-6" />
                     <span className="text-lg font-bold">InvoiceParser</span>
                   </Link>
@@ -80,10 +91,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </Sheet>
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <FileText className="h-6 w-6" />
-              <span className="text-lg font-bold hidden md:inline-block">InvoiceParser</span>
+              <span className="hidden text-lg font-bold md:inline-block">
+                InvoiceParser
+              </span>
             </Link>
           </div>
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden items-center gap-6 md:flex">
             {navItems.map((item) => (
               <DesktopNavLink key={item.href} item={item} />
             ))}
@@ -97,7 +110,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <div className="flex flex-1">
-        <aside className="hidden md:flex w-64 flex-col border-r bg-muted/40">
+        <aside className="bg-muted/40 hidden w-64 flex-col border-r md:flex">
           <nav className="flex-1 space-y-1 p-4">
             {navItems.map((item) => (
               <SidebarNavLink key={item.href} item={item} />
@@ -107,47 +120,49 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1">{children}</main>
       </div>
     </div>
-  )
+  );
 }
 
 function MobileNavLink({ item }: { item: NavItem }) {
-  const pathname = usePathname()
-  const isActive = pathname === item.href
+  const pathname = usePathname();
+  const isActive = pathname === item.href;
 
   return (
     <Link
       href={item.href}
       className={cn(
         "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
-        isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground",
+        isActive
+          ? "bg-accent text-accent-foreground"
+          : "hover:bg-accent hover:text-accent-foreground",
       )}
     >
       <item.icon className="h-5 w-5" />
       {item.title}
     </Link>
-  )
+  );
 }
 
 function DesktopNavLink({ item }: { item: NavItem }) {
-  const pathname = usePathname()
-  const isActive = pathname === item.href
+  const pathname = usePathname();
+  const isActive = pathname === item.href;
 
   return (
     <Link
       href={item.href}
       className={cn(
-        "text-sm font-medium transition-colors hover:text-primary",
+        "hover:text-primary text-sm font-medium transition-colors",
         isActive ? "text-primary" : "text-muted-foreground",
       )}
     >
       {item.title}
     </Link>
-  )
+  );
 }
 
 function SidebarNavLink({ item }: { item: NavItem }) {
-  const pathname = usePathname()
-  const isActive = pathname === item.href
+  const pathname = usePathname();
+  const isActive = pathname === item.href;
 
   return (
     <Link
@@ -162,5 +177,5 @@ function SidebarNavLink({ item }: { item: NavItem }) {
       <item.icon className="h-5 w-5" />
       {item.title}
     </Link>
-  )
+  );
 }

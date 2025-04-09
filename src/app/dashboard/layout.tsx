@@ -1,6 +1,6 @@
 import type React from "react";
 import "@/styles/globals.css";
-import { DashboardLayout } from "@/components/dashboard-layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 
 export const metadata = {
   title: "Invoice Parser Dashboard",
