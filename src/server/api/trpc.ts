@@ -14,6 +14,7 @@ import oauth2Client from "@/server/auth/oauth2Client";
 import { google } from "googleapis";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
+import { s3Client } from "@/server/auth/s3Client";
 
 /**
  * 1. CONTEXT
@@ -38,6 +39,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
       version: "v1",
       auth: oauth2Client,
     }),
+    s3Client,
     ...opts,
   };
 };

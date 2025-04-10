@@ -7,6 +7,12 @@ import {
 } from "@/server/mail/parse";
 import { composeMail } from "@/server/mail/compose";
 import { db } from "../db";
+import { processInvoice } from "@/server/ai/openrouter";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { s3Client } from "@/server/auth/s3Client";
+import { env } from "process";
 
 export async function processHistories(
   gmail: gmail_v1.Gmail,
@@ -58,8 +64,9 @@ export async function processHistories(
     // Find a message in the thread with a PDF attachment
     let emailMetadata: EmailMetadata | null = null;
     let hasPdfAttachment = false;
+    let aiResponseText = ""; // Store the AI response
 
-    // Process messages in reverse order (newest first) to find the most recent PDF
+    // Process messages
     const messages = thread.data.messages ?? [];
     for (const message of messages) {
       if (!message.id) continue;
@@ -83,7 +90,128 @@ export async function processHistories(
       const pdfAttachments = extractPdfAttachment(parsedEmail);
       if (pdfAttachments.length > 0) {
         hasPdfAttachment = true;
-        break;
+
+        for (const attachment of pdfAttachments) {
+          // Upload the PDF to S3
+          try {
+            // Create a buffer from the attachment content
+            const pdfBuffer = Buffer.from(attachment.content);
+
+            const key = `invoices/${emailMetadata.from}/${threadId}/${attachment.filename}.pdf`;
+
+            // First upload the file to S3
+            await s3Client.send(
+              new PutObjectCommand({
+                Bucket: env.BUCKET_NAME,
+                Key: key,
+                Body: pdfBuffer,
+                ContentType: "application/pdf",
+              }),
+            );
+
+            // Then generate a presigned URL for the already uploaded file
+            const command = new GetObjectCommand({
+              Bucket: env.BUCKET_NAME,
+              Key: key,
+            });
+
+            const presignedUrl = await getSignedUrl(s3Client, command, {
+              expiresIn: 3600,
+            });
+
+            console.log("Generated presigned URL:", presignedUrl);
+
+            // Create a FormData object for the file upload
+            const formData = new FormData();
+
+            // In Node.js environment, use Blob instead of File
+            const pdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
+            // The third parameter to append() sets the filename
+            formData.append(
+              "file",
+              pdfBlob,
+              attachment.filename ?? "invoice.pdf",
+            );
+            formData.append("user", "invoice06@gmail.com");
+
+            // Upload the file to Dify
+            const fileUploadResponse = await fetch(
+              "https://api.dify.ai/v1/files/upload",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${env.DIFY_API_KEY}`,
+                },
+                body: formData,
+              },
+            );
+
+            // Define a type for the file upload response
+            interface DifyFileUploadResponse {
+              id: string;
+              name: string;
+              size: number;
+              extension: string;
+              mime_type: string;
+              created_by: string;
+              created_at: number;
+            }
+
+            const fileUploadData =
+              (await fileUploadResponse.json()) as DifyFileUploadResponse;
+            console.log("File uploaded to Dify:", fileUploadData);
+
+            // Call Dify API with the uploaded file ID
+            const aiResponse = await fetch(
+              "https://api.dify.ai/v1/workflows/run",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${env.DIFY_API_KEY}`,
+                },
+                body: JSON.stringify({
+                  inputs: {
+                    file: [
+                      {
+                        transfer_method: "local_file",
+                        upload_file_id: fileUploadData.id,
+                        type: "document",
+                      },
+                    ],
+                  },
+                  response_mode: "blocking",
+                  user: "invoice06@gmail.com",
+                }),
+              },
+            );
+
+            // Define a type for the AI response data
+            interface DifyResponse {
+              data: {
+                outputs: {
+                  text: string;
+                };
+              };
+            }
+
+            const aiResponseData = (await aiResponse.json()) as DifyResponse;
+            console.log(aiResponseData);
+
+            // Extract the AI response text using optional chaining
+            const answer = aiResponseData?.data?.outputs?.text;
+            aiResponseText =
+              answer ??
+              "Sorry, I couldn't process your invoice. Please make sure it's a valid PDF document.";
+          } catch (error) {
+            console.error("Error processing PDF attachment:", error);
+            aiResponseText =
+              "Sorry, there was an error processing your invoice. Please try again later.";
+          }
+        }
+
+        // Store the AI response for use in the email
+        emailMetadata.aiResponse = aiResponseText;
       }
     }
 
@@ -107,7 +235,9 @@ export async function processHistories(
         from: "invoice06@gmail.com",
         to: emailMetadata.from,
         subject: `[Invoice AI] Re: ${emailMetadata.subject}`,
-        text: "test",
+        text:
+          emailMetadata.aiResponse ??
+          "Thank you for your email. We've received your invoice, but we couldn't process it automatically. Please ensure it's a valid PDF document.",
         inReplyTo: emailMetadata.messageId,
         references: emailMetadata.references,
       });

@@ -10,6 +10,7 @@ export type EmailMetadata = {
   messageId?: string;
   inReplyTo?: string;
   references: string | string[];
+  aiResponse?: string;
 };
 
 export async function parseRawMessage(rawMessage: string): Promise<ParsedMail> {
