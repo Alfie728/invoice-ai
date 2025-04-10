@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { type gmail_v1 } from "googleapis/build/src/apis/gmail";
 import { env } from "@/env";
 
 const oauth2Client = new google.auth.OAuth2(

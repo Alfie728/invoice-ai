@@ -1,7 +1,8 @@
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { getSyncStatus } from "@/server/sync-helper";
+import { getSyncStatus } from "@/server/sync/syncStatus";
+
 export const syncRouter = createTRPCRouter({
   status: protectedProcedure.query(async ({ ctx }) => {
     if (!ctx.session?.account?.id) {
