@@ -1,69 +1,116 @@
 import type { gmail_v1 } from "googleapis";
-import { extractPdfAttachment, parseRawMessage } from "@/server/mail/parse";
+import {
+  extractPdfAttachment,
+  parseRawMessage,
+  extractEmailMetadata,
+  type EmailMetadata,
+} from "@/server/mail/parse";
 import { composeMail } from "@/server/mail/compose";
-import { updateSyncStatus } from "./syncStatus";
+import { db } from "../db";
 
 export async function processHistories(
   gmail: gmail_v1.Gmail,
   histories: gmail_v1.Schema$History[],
 ) {
-  const threadIds = new Set<string>();
-  const messageIds = new Set<string>();
+  // Use a simple Set to track threads that need processing
+  const threadsToProcess = new Set<string>();
 
+  // First pass: collect all thread IDs from inbox messages
   for (const history of histories) {
     if (history.messagesAdded) {
       for (const message of history.messagesAdded) {
-        threadIds.add(message.message?.threadId ?? "");
+        if (
+          message.message?.labelIds?.includes("INBOX") &&
+          !message.message.labelIds.includes("SENT")
+        ) {
+          // Only track the thread ID, we don't need to track individual message IDs
+          threadsToProcess.add(message.message.threadId ?? "");
+        }
       }
     }
   }
 
-  if (threadIds.size > 0) {
-    const threadIdsArray = Array.from(threadIds);
+  // Process each thread
+  for (const threadId of threadsToProcess) {
+    // Check if we've already replied to this thread
+    const existingReply = await db.repliedThread.findUnique({
+      where: { threadId },
+    });
 
-    await Promise.all(
-      threadIdsArray.map(async (threadId) => {
-        const thread = await gmail.users.threads.get({
-          userId: "me",
-          id: threadId,
-          format: "metadata",
-        });
-        thread.data?.messages?.forEach((m) => m.id && messageIds.add(m.id));
-      }),
-    );
-  }
+    if (existingReply) continue;
 
-  if (messageIds.size > 0) {
-    const messageIdsArray = Array.from(messageIds);
+    // Get the thread details
+    const thread = await gmail.users.threads.get({
+      userId: "me",
+      id: threadId,
+      format: "metadata",
+    });
 
-    for (const messageId of messageIdsArray) {
-      const message = await gmail.users.messages.get({
+    // Find a message in the thread with a PDF attachment
+    let emailMetadata: EmailMetadata | null = null;
+    let hasPdfAttachment = false;
+
+    const messages = thread.data.messages ?? [];
+    for (const message of messages) {
+      if (!message.id) continue;
+
+      // Get and parse the message
+      const { data } = await gmail.users.messages.get({
         userId: "me",
-        id: messageId,
+        id: message.id,
         format: "raw",
       });
-      const rawMessage = message.data?.raw;
-      if (!rawMessage) return;
 
-      const parsedEmail = await parseRawMessage(rawMessage);
-      const pdfAttachment = extractPdfAttachment(parsedEmail);
-      if (pdfAttachment) {
-        console.log("pdf detected");
-        // const mail = await composeMail({
-        //   from: "invoice06@gmail.com",
-        //   to: "invoice06@gmail.com",
-        //   subject: "Reply to invoice",
-        //   text: "test",
-        // });
+      if (!data.raw) continue;
 
-        // const messageResponse = await gmail.users.messages.send({
-        //   userId: "me",
-        //   requestBody: {
-        //     raw: mail,
-        //   },
-        // });
-        // console.log(messageResponse);
+      const parsedEmail = await parseRawMessage(data.raw);
+      emailMetadata = extractEmailMetadata(parsedEmail);
+
+      // Skip our own messages
+      if (emailMetadata.from.includes("invoiceai06@gmail.com")) continue;
+
+      // Check for PDF attachment
+      const pdfAttachments = extractPdfAttachment(parsedEmail);
+      if (pdfAttachments.length > 0) {
+        hasPdfAttachment = true;
+        break;
       }
+    }
+
+    // Skip if no suitable message found
+    if (!hasPdfAttachment || !emailMetadata) continue;
+
+    try {
+      const mail = await composeMail({
+        from: "invoice06@gmail.com",
+        to: emailMetadata.from,
+        subject: `[Invoice AI] Re: ${emailMetadata.subject}`,
+        text: "test",
+        inReplyTo: emailMetadata.messageId,
+        references: emailMetadata.references,
+      });
+
+      await gmail.users.messages.send({
+        userId: "me",
+        requestBody: {
+          raw: mail,
+          threadId: threadId,
+        },
+      });
+
+      await db.repliedThread.create({
+        data: {
+          threadId,
+          emailAddress: emailMetadata.from,
+          subject: emailMetadata.subject,
+          messageId: emailMetadata.messageId,
+        },
+      });
+    } catch (error) {
+      console.error(
+        `Error sending reply to thread ${threadId.substring(0, 8)}...:`,
+        error,
+      );
     }
   }
 }

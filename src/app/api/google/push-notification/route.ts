@@ -25,6 +25,8 @@ function debounceNotification(emailAddress: string, historyId: string) {
   const email = String(emailAddress);
   const id = String(historyId);
 
+  console.log("recevied historyId", id);
+
   // Clear existing timeout if there is one
   const existingEntry = pendingNotifications.get(email);
   if (existingEntry) {

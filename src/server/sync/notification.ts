@@ -8,6 +8,7 @@ export async function processNotification(
   emailAddress: string,
   historyId: string,
 ) {
+  console.log("processing with latest historyId", historyId);
   const user = await db.user.findUnique({
     where: {
       email: emailAddress,

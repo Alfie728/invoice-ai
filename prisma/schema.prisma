@@ -63,6 +63,18 @@ model SyncStatus {
     watchExpiration DateTime?
 }
 
+model RepliedThread {
+    id           String   @id @default(cuid())
+    threadId     String   @unique
+    emailAddress String // The email address that received the message
+    repliedAt    DateTime @default(now())
+    messageId    String? // Optional: store the ID of the message you replied to
+    subject      String? // Optional: store the subject for debugging/auditing
+
+    @@index([emailAddress]) // For faster lookups by email
+    @@index([repliedAt]) // For potential cleanup of old records
+}
+
 model InvoiceSender {
     id              String    @id @default(cuid())
     name            String

@@ -1,6 +1,17 @@
 import { simpleParser, type ParsedMail, type Attachment } from "mailparser";
 import { toByteArray } from "base64-js";
 
+export type EmailMetadata = {
+  subject: string;
+  from: string;
+  date: string;
+  text: string;
+  html: string;
+  messageId?: string;
+  inReplyTo?: string;
+  references: string | string[];
+};
+
 export async function parseRawMessage(rawMessage: string): Promise<ParsedMail> {
   const bytes = toByteArray(rawMessage);
   const decodedMessage = Buffer.from(bytes).toString("utf-8");
@@ -14,13 +25,15 @@ export function extractPdfAttachment(parsedEmail: ParsedMail): Attachment[] {
   );
 }
 
-export function extractEmailMetadata(parsedEmail: ParsedMail) {
+export function extractEmailMetadata(parsedEmail: ParsedMail): EmailMetadata {
   return {
-    subject: parsedEmail.subject,
-    from: parsedEmail.from,
-    to: parsedEmail.to,
-    date: parsedEmail.date,
-    text: parsedEmail.text,
-    html: parsedEmail.html,
+    subject: parsedEmail.subject ?? "",
+    from: parsedEmail.from?.value?.[0]?.address ?? "",
+    date: parsedEmail.date?.toISOString() ?? "",
+    text: parsedEmail.text ?? "",
+    html: parsedEmail.html || "",
+    messageId: parsedEmail.messageId,
+    inReplyTo: parsedEmail.inReplyTo,
+    references: parsedEmail.references ?? "",
   };
 }
