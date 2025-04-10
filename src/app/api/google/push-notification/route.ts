@@ -47,27 +47,27 @@ function debounceNotification(emailAddress: string, historyId: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const data = (await request.json()) as GoogleNotification;
-  const { historyId, emailAddress } = data;
-
-  if (!historyId || !emailAddress) {
-    console.error("Invalid request", data);
-    return NextResponse.json(
-      { success: false, error: "Invalid request" },
-      { status: 200 },
-    );
-  }
-
   try {
+    const data = (await request.json()) as GoogleNotification;
+    const { historyId, emailAddress } = data;
+
+    if (!historyId || !emailAddress) {
+      console.error("Invalid request", data);
+      return NextResponse.json(
+        { success: false, error: "Invalid request" },
+        { status: 200 },
+      );
+    }
+
     // Debounce notification to prevent spam
     debounceNotification(emailAddress, historyId);
+
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error(error);
+    console.error("Error processing notification:", error);
     return NextResponse.json(
       { success: false, error: "Failed to process notification" },
       { status: 200 },
     );
   }
-
-  return NextResponse.json({ success: true }, { status: 200 });
 }

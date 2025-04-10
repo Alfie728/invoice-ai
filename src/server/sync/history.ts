@@ -12,6 +12,8 @@ export async function processHistories(
   gmail: gmail_v1.Gmail,
   histories: gmail_v1.Schema$History[],
 ) {
+  console.log("Processing histories:", histories.length);
+
   // Use a simple Set to track threads that need processing
   const threadsToProcess = new Set<string>();
 
@@ -30,6 +32,8 @@ export async function processHistories(
     }
   }
 
+  console.log(`Found ${threadsToProcess.size} threads to process`);
+
   // Process each thread
   for (const threadId of threadsToProcess) {
     // Check if we've already replied to this thread
@@ -37,7 +41,12 @@ export async function processHistories(
       where: { threadId },
     });
 
-    if (existingReply) continue;
+    if (existingReply) {
+      console.log(
+        `Thread ${threadId.substring(0, 8)}... already replied to on ${existingReply.repliedAt.toISOString()}, skipping`,
+      );
+      continue;
+    }
 
     // Get the thread details
     const thread = await gmail.users.threads.get({
@@ -50,6 +59,7 @@ export async function processHistories(
     let emailMetadata: EmailMetadata | null = null;
     let hasPdfAttachment = false;
 
+    // Process messages in reverse order (newest first) to find the most recent PDF
     const messages = thread.data.messages ?? [];
     for (const message of messages) {
       if (!message.id) continue;
@@ -78,7 +88,19 @@ export async function processHistories(
     }
 
     // Skip if no suitable message found
-    if (!hasPdfAttachment || !emailMetadata) continue;
+    if (!hasPdfAttachment || !emailMetadata) {
+      console.log(
+        `Thread ${threadId.substring(0, 8)}... skipped: ${!hasPdfAttachment ? "No PDF attachment" : "No valid metadata"}`,
+      );
+      continue;
+    }
+
+    console.log(
+      `Processing thread ${threadId.substring(0, 8)}... from ${emailMetadata.from.substring(0, 15)}...`,
+    );
+
+    // Send the reply
+    console.log(`Sending reply to thread ${threadId.substring(0, 8)}...`);
 
     try {
       const mail = await composeMail({
@@ -106,6 +128,10 @@ export async function processHistories(
           messageId: emailMetadata.messageId,
         },
       });
+
+      console.log(
+        `Reply sent and recorded in database for thread ${threadId.substring(0, 8)}...`,
+      );
     } catch (error) {
       console.error(
         `Error sending reply to thread ${threadId.substring(0, 8)}...:`,
