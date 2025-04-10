@@ -1,7 +1,7 @@
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { getSyncStatus } from "@/server/sync/syncStatus";
+import { getSyncStatus, updateSyncStatus } from "@/server/sync/syncStatus";
 
 export const syncRouter = createTRPCRouter({
   status: protectedProcedure.query(async ({ ctx }) => {
@@ -42,8 +42,8 @@ export const syncRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const session = ctx.session;
-        if (!session) {
+        const accountId = ctx.session?.account?.id;
+        if (!accountId) {
           throw new TRPCError({
             code: "UNAUTHORIZED",
             message: "Unauthorized",
@@ -66,30 +66,7 @@ export const syncRouter = createTRPCRouter({
           },
         });
 
-        await ctx.db.syncStatus.upsert({
-          where: {
-            accountId: ctx.session?.account?.id,
-          },
-          create: {
-            lastHistoryId: watchResponse.data.historyId,
-            lastSyncedAt: new Date(),
-            watchExpiration: watchResponse.data.expiration
-              ? new Date(parseInt(watchResponse.data.expiration, 10))
-              : undefined,
-            account: {
-              connect: {
-                id: ctx.session?.account?.id,
-              },
-            },
-          },
-          update: {
-            lastHistoryId: watchResponse.data.historyId,
-            lastSyncedAt: new Date(),
-            watchExpiration: watchResponse.data.expiration
-              ? new Date(parseInt(watchResponse.data.expiration, 10))
-              : undefined,
-          },
-        });
+        await updateSyncStatus(accountId, watchResponse.data.historyId ?? "");
 
         return watchResponse;
       } catch (error) {

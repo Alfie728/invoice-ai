@@ -1,8 +1,8 @@
 import { google } from "googleapis";
-import oauth2Client from "../auth/oauth2Client";
-import { db } from "../db";
+import oauth2Client from "@/server/auth/oauth2Client";
+import { db } from "@/server/db";
 import { processHistories } from "@/server/sync/history";
-import { getSyncStatus } from "@/server/sync/syncStatus";
+import { getSyncStatus, updateSyncStatus } from "@/server/sync/syncStatus";
 
 export async function processNotification(
   emailAddress: string,
@@ -52,4 +52,5 @@ export async function processNotification(
   });
 
   await processHistories(gmail, histories.data.history ?? []);
+  await updateSyncStatus(account.id, historyId);
 }

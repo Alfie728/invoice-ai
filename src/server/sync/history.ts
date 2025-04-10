@@ -1,6 +1,7 @@
-import { toByteArray } from "base64-js";
 import type { gmail_v1 } from "googleapis";
-import { type ParsedMail, simpleParser } from "mailparser";
+import { extractPdfAttachment, parseRawMessage } from "@/server/mail/parse";
+import { composeMail } from "@/server/mail/compose";
+import { updateSyncStatus } from "./syncStatus";
 
 export async function processHistories(
   gmail: gmail_v1.Gmail,
@@ -34,7 +35,6 @@ export async function processHistories(
 
   if (messageIds.size > 0) {
     const messageIdsArray = Array.from(messageIds);
-    console.log("messageIdsArray", messageIdsArray);
 
     for (const messageId of messageIdsArray) {
       const message = await gmail.users.messages.get({
@@ -42,23 +42,27 @@ export async function processHistories(
         id: messageId,
         format: "raw",
       });
-      // console.log("message", message);
       const rawMessage = message.data?.raw;
       if (!rawMessage) return;
 
-      const bytes = toByteArray(rawMessage);
-      const decodedMessage = Buffer.from(bytes).toString("utf-8");
+      const parsedEmail = await parseRawMessage(rawMessage);
+      const pdfAttachment = extractPdfAttachment(parsedEmail);
+      if (pdfAttachment) {
+        console.log("pdf detected");
+        // const mail = await composeMail({
+        //   from: "invoice06@gmail.com",
+        //   to: "invoice06@gmail.com",
+        //   subject: "Reply to invoice",
+        //   text: "test",
+        // });
 
-      const parsed: ParsedMail = await simpleParser(decodedMessage);
-
-      const attachments = parsed.attachments;
-      if (attachments.length > 0) {
-        const pdfAttachment = attachments.find(
-          (attachment) => attachment.contentType === "application/pdf",
-        );
-        if (pdfAttachment) {
-          console.log("pdf detected");
-        }
+        // const messageResponse = await gmail.users.messages.send({
+        //   userId: "me",
+        //   requestBody: {
+        //     raw: mail,
+        //   },
+        // });
+        // console.log(messageResponse);
       }
     }
   }
