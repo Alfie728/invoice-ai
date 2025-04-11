@@ -4,21 +4,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/trpc/react";
 import type { Invoice } from "@prisma/client";
+import { toast } from "sonner";
 
 interface InvoiceDetailsProps {
   invoice: Invoice;
   isEditing: boolean;
-  editedInvoice: Invoice;
-  handleInvoiceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export function InvoiceDetails({
-  invoice,
-  isEditing,
-  editedInvoice,
-  handleInvoiceChange,
-}: InvoiceDetailsProps) {
+export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
+  const utils = api.useUtils();
+  const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation({
+    onSuccess: () => {
+      toast.success("Invoice updated successfully");
+      void utils.invoice.getInvoiceById.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+  const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(e.target.name, e.target.value);
+  };
   return (
     <Card>
       <CardHeader>
@@ -31,11 +39,7 @@ export function InvoiceDetails({
             <Input
               id="invoice-number"
               name="invoiceNumber"
-              value={
-                isEditing
-                  ? editedInvoice.invoiceNumber
-                  : invoice.invoiceNumber
-              }
+              value={isEditing ? invoice.invoiceNumber : invoice.invoiceNumber}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -49,7 +53,7 @@ export function InvoiceDetails({
               type="date"
               value={
                 isEditing
-                  ? editedInvoice.invoiceDate.toISOString().split("T")[0]
+                  ? invoice.invoiceDate.toISOString().split("T")[0]
                   : invoice.invoiceDate.toISOString().split("T")[0]
               }
               onChange={handleInvoiceChange}
@@ -62,7 +66,7 @@ export function InvoiceDetails({
             <Input
               id="vendor"
               name="vendorName"
-              value={isEditing ? editedInvoice.vendorName : invoice.vendorName}
+              value={isEditing ? invoice.vendorName : invoice.vendorName}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -75,7 +79,7 @@ export function InvoiceDetails({
               name="vendorCode"
               value={
                 isEditing
-                  ? (editedInvoice.vendorCode ?? "")
+                  ? (invoice.vendorCode ?? "")
                   : (invoice.vendorCode ?? "")
               }
               onChange={handleInvoiceChange}
@@ -90,7 +94,7 @@ export function InvoiceDetails({
               name="propertyCode"
               value={
                 isEditing
-                  ? (editedInvoice.propertyCode ?? "")
+                  ? (invoice.propertyCode ?? "")
                   : (invoice.propertyCode ?? "")
               }
               onChange={handleInvoiceChange}
@@ -106,7 +110,7 @@ export function InvoiceDetails({
               type="date"
               value={
                 isEditing
-                  ? editedInvoice.invoiceDueDate?.toISOString().split("T")[0]
+                  ? invoice.invoiceDueDate?.toISOString().split("T")[0]
                   : invoice.invoiceDueDate?.toISOString().split("T")[0]
               }
               onChange={handleInvoiceChange}
@@ -121,7 +125,7 @@ export function InvoiceDetails({
               name="apAccount"
               value={
                 isEditing
-                  ? (editedInvoice.apAccount ?? "")
+                  ? (invoice.apAccount ?? "")
                   : (invoice.apAccount ?? "")
               }
               onChange={handleInvoiceChange}
@@ -136,7 +140,7 @@ export function InvoiceDetails({
               name="cashAccount"
               value={
                 isEditing
-                  ? (editedInvoice.cashAccount ?? "")
+                  ? (invoice.cashAccount ?? "")
                   : (invoice.cashAccount ?? "")
               }
               onChange={handleInvoiceChange}
@@ -151,7 +155,7 @@ export function InvoiceDetails({
               name="expenseType"
               value={
                 isEditing
-                  ? (editedInvoice.expenseType ?? "")
+                  ? (invoice.expenseType ?? "")
                   : (invoice.expenseType ?? "")
               }
               onChange={handleInvoiceChange}
@@ -168,9 +172,10 @@ export function InvoiceDetails({
             <Input
               id="sub-total"
               name="subTotalAmount"
+              type="number"
               value={
                 isEditing
-                  ? editedInvoice.subTotalAmount.toString()
+                  ? invoice.subTotalAmount.toString()
                   : invoice.subTotalAmount.toString()
               }
               onChange={handleInvoiceChange}
@@ -183,9 +188,10 @@ export function InvoiceDetails({
             <Input
               id="tax-amount"
               name="taxAmount"
+              type="number"
               value={
                 isEditing
-                  ? (editedInvoice.taxAmount ?? "")
+                  ? (invoice.taxAmount ?? "")
                   : (invoice.taxAmount ?? "")
               }
               onChange={handleInvoiceChange}
@@ -198,9 +204,8 @@ export function InvoiceDetails({
             <Input
               id="total-amount"
               name="totalAmount"
-              value={
-                isEditing ? editedInvoice.totalAmount : invoice.totalAmount
-              }
+              type="number"
+              value={isEditing ? invoice.totalAmount : invoice.totalAmount}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
               className="font-bold"

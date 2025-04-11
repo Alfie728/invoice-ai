@@ -11,16 +11,12 @@ interface InvoiceHeaderProps {
   invoice: Invoice;
   isEditing: boolean;
   setIsEditing: (value: boolean) => void;
-  saveChanges: () => void;
-  cancelChanges: () => void;
 }
 
 export function InvoiceHeader({
   invoice,
   isEditing,
   setIsEditing,
-  saveChanges,
-  cancelChanges,
 }: InvoiceHeaderProps) {
   const isEditable = invoice.invoiceStatus === "PENDING";
 
@@ -52,11 +48,11 @@ export function InvoiceHeader({
         )}
         {isEditing && (
           <>
-            <Button variant="outline" onClick={cancelChanges}>
+            <Button variant="outline" onClick={() => setIsEditing(false)}>
               <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
-            <Button onClick={saveChanges}>
+            <Button onClick={() => setIsEditing(false)}>
               <Check className="mr-2 h-4 w-4" />
               Save Changes
             </Button>

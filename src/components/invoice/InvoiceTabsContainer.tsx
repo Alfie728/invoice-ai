@@ -19,7 +19,6 @@ export function InvoiceTabsContainer({ invoiceId }: InvoiceTabsContainerProps) {
   const { data: invoice, isLoading } = api.invoice.getInvoiceById.useQuery({
     id: invoiceId,
   });
-
   // We'll only render the editing components when we have data
   if (isLoading || !invoice) {
     return <InvoiceLoadingSkeleton />;
@@ -34,73 +33,14 @@ function InvoiceContent({
 }: {
   initialInvoice: Invoice & { invoiceLineItem: InvoiceLineItem[] };
 }) {
-  const [invoice, setInvoice] = useState(initialInvoice);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedInvoice, setEditedInvoice] = useState(invoice);
-  const [editedLineItems, setEditedLineItems] = useState(
-    invoice.invoiceLineItem,
-  );
-
-  const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setEditedInvoice({
-      ...editedInvoice,
-      [name]: value,
-    });
-  };
-
-  const handleLineItemChange = (
-    id: string,
-    field: string,
-    value: string | number,
-  ) => {
-    setEditedLineItems(
-      editedLineItems.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              [field]:
-                field === "quantity" || field === "unitPrice"
-                  ? Number(value)
-                  : value,
-              total:
-                field === "quantity"
-                  ? Number(value) * item.unitPrice
-                  : field === "unitPrice"
-                    ? item.quantity * Number(value)
-                    : item.amount,
-            }
-          : item,
-      ),
-    );
-  };
-
-  const saveChanges = () => {
-    setInvoice({
-      ...editedInvoice,
-      invoiceLineItem: editedLineItems,
-      subTotalAmount: editedLineItems.reduce(
-        (sum, item) => sum + item.amount,
-        0,
-      ),
-    });
-    setIsEditing(false);
-  };
-
-  const cancelChanges = () => {
-    setEditedInvoice(invoice);
-    setEditedLineItems(invoice.invoiceLineItem);
-    setIsEditing(false);
-  };
 
   return (
     <>
       <InvoiceHeader
-        invoice={invoice}
+        invoice={initialInvoice}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
-        saveChanges={saveChanges}
-        cancelChanges={cancelChanges}
       />
 
       <Tabs defaultValue="details" className="space-y-4">
@@ -110,23 +50,15 @@ function InvoiceContent({
         </TabsList>
 
         <TabsContent value="details" className="space-y-4">
-          <InvoiceDetails
-            invoice={invoice}
-            isEditing={isEditing}
-            editedInvoice={editedInvoice}
-            handleInvoiceChange={handleInvoiceChange}
-          />
+          <InvoiceDetails invoice={initialInvoice} isEditing={isEditing} />
           <LineItems
-            invoiceLineItem={
-              isEditing ? editedLineItems : invoice.invoiceLineItem
-            }
+            invoiceLineItems={initialInvoice.invoiceLineItem}
             isEditing={isEditing}
-            handleLineItemChange={handleLineItemChange}
           />
         </TabsContent>
 
         <TabsContent value="history">
-          <InvoiceHistory invoiceId={invoice.id} />
+          <InvoiceHistory invoiceId={initialInvoice.id} />
         </TabsContent>
       </Tabs>
     </>
