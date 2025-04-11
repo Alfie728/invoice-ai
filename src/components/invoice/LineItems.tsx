@@ -23,24 +23,6 @@ interface LineItemsProps {
 }
 
 export function LineItems({ invoiceLineItems, isEditing }: LineItemsProps) {
-  const utils = api.useUtils();
-  const { mutate: updateInvoiceItem } =
-    api.invoice.updateInvoiceItem.useMutation({
-      onSuccess: () => {
-        toast.success("Invoice item updated successfully");
-        void utils.invoice.getInvoiceById.invalidate();
-      },
-      onError: (error) => {
-        toast.error(error.message);
-      },
-    });
-  const handleLineItemChange = (
-    id: string,
-    field: string,
-    value: string | number,
-  ) => {
-    console.log(id, field, value);
-  };
   return (
     <Card>
       <CardHeader>
@@ -85,6 +67,30 @@ interface LineItemProps {
 }
 
 export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
+  const [localDescription, setLocalDescription] = useState(
+    invoiceLineItem.description,
+  );
+  const [localQuantity, setLocalQuantity] = useState(invoiceLineItem.quantity);
+  const [localUnitPrice, setLocalUnitPrice] = useState(
+    invoiceLineItem.unitPrice,
+  );
+  const [localGlCode, setLocalGlCode] = useState(invoiceLineItem.glCode);
+  const [localAmount, setLocalAmount] = useState(
+    invoiceLineItem.unitPrice * invoiceLineItem.quantity,
+  );
+
+  const utils = api.useUtils();
+  const { mutate: updateInvoiceItem } =
+    api.invoice.updateInvoiceItem.useMutation({
+      onSuccess: () => {
+        toast.success("Invoice item updated successfully");
+        void utils.invoice.getInvoiceById.invalidate();
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
   const handleLineItemChange = (
     id: string,
     field: string,
@@ -97,7 +103,7 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
       <TableCell>
         {isEditing ? (
           <Input
-            value={invoiceLineItem.description}
+            value={localDescription}
             onChange={(e) =>
               handleLineItemChange(
                 invoiceLineItem.id,
@@ -114,7 +120,7 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
         {isEditing ? (
           <Input
             type="number"
-            value={invoiceLineItem.quantity}
+            value={localQuantity}
             onChange={(e) =>
               handleLineItemChange(
                 invoiceLineItem.id,
@@ -132,7 +138,7 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
           <Input
             type="number"
             step="0.01"
-            value={invoiceLineItem.unitPrice}
+            value={localUnitPrice}
             onChange={(e) =>
               handleLineItemChange(
                 invoiceLineItem.id,
@@ -142,13 +148,13 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
             }
           />
         ) : (
-          `$${invoiceLineItem.unitPrice.toFixed(2)}`
+          `$${localUnitPrice.toFixed(2)}`
         )}
       </TableCell>
       <TableCell>
         {isEditing ? (
           <Input
-            value={invoiceLineItem.glCode ?? ""}
+            value={localGlCode ?? ""}
             onChange={(e) =>
               handleLineItemChange(invoiceLineItem.id, "glCode", e.target.value)
             }
@@ -158,7 +164,7 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
         )}
       </TableCell>
       <TableCell className="text-right font-medium">
-        ${invoiceLineItem.amount.toFixed(2)}
+        ${localAmount.toFixed(2)}
       </TableCell>
       {isEditing && (
         <TableCell>

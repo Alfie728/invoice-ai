@@ -120,7 +120,7 @@ export default function DashboardPage() {
                         </TableCell>
                         <TableCell>{invoice.vendorName}</TableCell>
                         <TableCell className="text-right">
-                          ${invoice.totalAmount.toFixed(2)}
+                          ${invoice.subTotalAmount + (invoice.taxAmount ?? 0)}
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -231,7 +231,7 @@ export default function DashboardPage() {
                           </TableCell>
                           <TableCell>{invoice.vendorName}</TableCell>
                           <TableCell className="text-right">
-                            ${invoice.totalAmount.toFixed(2)}
+                            ${invoice.subTotalAmount + (invoice.taxAmount ?? 0)}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">
@@ -320,7 +320,7 @@ export default function DashboardPage() {
                           </TableCell>
                           <TableCell>{invoice.vendorName}</TableCell>
                           <TableCell className="text-right">
-                            ${invoice.totalAmount.toFixed(2)}
+                            ${invoice.subTotalAmount + (invoice.taxAmount ?? 0)}
                           </TableCell>
                           <TableCell>
                             <Badge variant="default">
@@ -401,7 +401,7 @@ export default function DashboardPage() {
                           </TableCell>
                           <TableCell>{invoice.vendorName}</TableCell>
                           <TableCell className="text-right">
-                            ${invoice.totalAmount.toFixed(2)}
+                            ${invoice.subTotalAmount + (invoice.taxAmount ?? 0)}
                           </TableCell>
                           <TableCell>
                             <Badge variant="destructive">

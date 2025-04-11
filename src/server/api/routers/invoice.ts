@@ -42,11 +42,9 @@ export const invoiceRouter = createTRPCRouter({
           vendorName: z.string(),
           taxAmount: z.number().nullable(),
           subTotalAmount: z.number(),
-          totalAmount: z.number(),
           invoiceStatus: z.nativeEnum(InvoiceStatus),
           vendorCode: z.string().nullable(),
           propertyCode: z.string().nullable(),
-          invoiceAmount: z.number(),
           invoiceCurrency: z.nativeEnum(InvoiceCurrency),
           apAccount: z.string().nullable(),
           cashAccount: z.string().nullable(),
@@ -56,6 +54,8 @@ export const invoiceRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, data } = input;
+
+      console.log(data);
 
       // Update the invoice with proper nested update format
       const updatedInvoice = await ctx.db.invoice.update({
@@ -74,7 +74,6 @@ export const invoiceRouter = createTRPCRouter({
           description: z.string(),
           quantity: z.number(),
           unitPrice: z.number(),
-          amount: z.number(),
           glCode: z.string().nullable(),
         }),
       }),

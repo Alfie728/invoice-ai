@@ -1,13 +1,15 @@
 import { InvoiceTabsContainer } from "@/components/invoice/InvoiceTabsContainer";
 
-export default function InvoiceDetailPage({
+export default async function InvoiceDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   return (
     <div className="container mx-auto px-8 py-6">
-      <InvoiceTabsContainer invoiceId={params.id} />
+      <InvoiceTabsContainer invoiceId={id} />
     </div>
   );
 }

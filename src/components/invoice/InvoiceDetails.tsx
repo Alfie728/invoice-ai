@@ -7,13 +7,15 @@ import { Separator } from "@/components/ui/separator";
 import { api } from "@/trpc/react";
 import type { Invoice } from "@prisma/client";
 import { toast } from "sonner";
-
+import { useEffect, useState } from "react";
+import { useDebounce } from "@uidotdev/usehooks";
 interface InvoiceDetailsProps {
   invoice: Invoice;
   isEditing: boolean;
 }
 
 export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
+  const [localInvoice, setLocalInvoice] = useState(invoice);
   const utils = api.useUtils();
   const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation({
     onSuccess: () => {
@@ -24,9 +26,32 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
       toast.error(error.message);
     },
   });
+  const debouncedInvoice = useDebounce(localInvoice, 1000);
+
+  console.log(debouncedInvoice);
+
   const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.name, e.target.value);
+    const { name, value, type } = e.target;
+
+    // Convert string values to numbers for numeric fields
+    const parsedValue =
+      type === "number" ? (value === "" ? null : parseFloat(value)) : value;
+
+    setLocalInvoice({
+      ...localInvoice,
+      [name]: parsedValue,
+    });
   };
+
+  useEffect(() => {
+    updateInvoice({
+      id: invoice.id,
+      data: {
+        ...debouncedInvoice,
+      },
+    });
+  }, [debouncedInvoice]);
+
   return (
     <Card>
       <CardHeader>
@@ -39,7 +64,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
             <Input
               id="invoice-number"
               name="invoiceNumber"
-              value={isEditing ? invoice.invoiceNumber : invoice.invoiceNumber}
+              value={localInvoice.invoiceNumber}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -51,12 +76,13 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="invoice-date"
               name="invoiceDate"
               type="date"
-              value={
-                isEditing
-                  ? invoice.invoiceDate.toISOString().split("T")[0]
-                  : invoice.invoiceDate.toISOString().split("T")[0]
+              value={localInvoice.invoiceDate.toISOString().split("T")[0]}
+              onChange={(e) =>
+                setLocalInvoice({
+                  ...localInvoice,
+                  invoiceDate: new Date(e.target.value),
+                })
               }
-              onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
           </div>
@@ -66,7 +92,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
             <Input
               id="vendor"
               name="vendorName"
-              value={isEditing ? invoice.vendorName : invoice.vendorName}
+              value={localInvoice.vendorName}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -77,11 +103,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
             <Input
               id="vendor-code"
               name="vendorCode"
-              value={
-                isEditing
-                  ? (invoice.vendorCode ?? "")
-                  : (invoice.vendorCode ?? "")
-              }
+              value={localInvoice.vendorCode ?? ""}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -92,11 +114,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
             <Input
               id="property-code"
               name="propertyCode"
-              value={
-                isEditing
-                  ? (invoice.propertyCode ?? "")
-                  : (invoice.propertyCode ?? "")
-              }
+              value={localInvoice.propertyCode ?? ""}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -108,12 +126,13 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="due-date"
               name="invoiceDueDate"
               type="date"
-              value={
-                isEditing
-                  ? invoice.invoiceDueDate?.toISOString().split("T")[0]
-                  : invoice.invoiceDueDate?.toISOString().split("T")[0]
+              value={localInvoice.invoiceDueDate?.toISOString().split("T")[0]}
+              onChange={(e) =>
+                setLocalInvoice({
+                  ...localInvoice,
+                  invoiceDueDate: new Date(e.target.value),
+                })
               }
-              onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
           </div>
@@ -123,11 +142,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
             <Input
               id="ap-account"
               name="apAccount"
-              value={
-                isEditing
-                  ? (invoice.apAccount ?? "")
-                  : (invoice.apAccount ?? "")
-              }
+              value={localInvoice.apAccount ?? ""}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -138,11 +153,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
             <Input
               id="cash-account"
               name="cashAccount"
-              value={
-                isEditing
-                  ? (invoice.cashAccount ?? "")
-                  : (invoice.cashAccount ?? "")
-              }
+              value={localInvoice.cashAccount ?? ""}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -153,11 +164,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
             <Input
               id="expense-type"
               name="expenseType"
-              value={
-                isEditing
-                  ? (invoice.expenseType ?? "")
-                  : (invoice.expenseType ?? "")
-              }
+              value={localInvoice.expenseType ?? ""}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -173,11 +180,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="sub-total"
               name="subTotalAmount"
               type="number"
-              value={
-                isEditing
-                  ? invoice.subTotalAmount.toString()
-                  : invoice.subTotalAmount.toString()
-              }
+              value={localInvoice.subTotalAmount.toString()}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -189,11 +192,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="tax-amount"
               name="taxAmount"
               type="number"
-              value={
-                isEditing
-                  ? (invoice.taxAmount ?? "")
-                  : (invoice.taxAmount ?? "")
-              }
+              value={localInvoice.taxAmount?.toString() ?? ""}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -205,9 +204,10 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="total-amount"
               name="totalAmount"
               type="number"
-              value={isEditing ? invoice.totalAmount : invoice.totalAmount}
-              onChange={handleInvoiceChange}
-              disabled={!isEditing}
+              value={
+                localInvoice.subTotalAmount + (localInvoice.taxAmount ?? 0)
+              }
+              disabled
               className="font-bold"
             />
           </div>

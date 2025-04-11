@@ -99,7 +99,6 @@ model Invoice {
     vendorName      String
     taxAmount       Float? // Made optional as not all invoices have tax
     subTotalAmount  Float
-    totalAmount     Float
     // Coding Information
     vendorCode      String? // Made optional as might not be available for all vendors
     propertyCode    String? // Made optional as might not apply to all invoices
@@ -127,7 +126,6 @@ model InvoiceLineItem {
     description String
     quantity    Float
     unitPrice   Float
-    amount      Float
     glCode      String? // Made optional as might not be available for all items
     // Relations
     invoiceId   String
