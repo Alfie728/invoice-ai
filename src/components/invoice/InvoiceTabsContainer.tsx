@@ -6,10 +6,10 @@ import { InvoiceDetails } from "./InvoiceDetails";
 import { LineItems } from "./LineItems";
 import { InvoiceHistory } from "./InvoiceHistory";
 import { InvoiceHeader } from "./InvoiceHeader";
-import type { InvoiceType, LineItemType } from "@/types/invoice";
+import type { Invoice, InvoiceLineItem } from "@prisma/client";
 
 interface InvoiceTabsContainerProps {
-  initialInvoice: InvoiceType;
+  initialInvoice: Invoice & { invoiceLineItem: InvoiceLineItem[] };
 }
 
 export function InvoiceTabsContainer({
@@ -18,7 +18,9 @@ export function InvoiceTabsContainer({
   const [invoice, setInvoice] = useState(initialInvoice);
   const [isEditing, setIsEditing] = useState(false);
   const [editedInvoice, setEditedInvoice] = useState(invoice);
-  const [editedLineItems, setEditedLineItems] = useState(invoice.lineItems);
+  const [editedLineItems, setEditedLineItems] = useState(
+    invoice.invoiceLineItem,
+  );
 
   const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,7 +31,7 @@ export function InvoiceTabsContainer({
   };
 
   const handleLineItemChange = (
-    id: number,
+    id: string,
     field: string,
     value: string | number,
   ) => {
@@ -47,7 +49,7 @@ export function InvoiceTabsContainer({
                   ? Number(value) * item.unitPrice
                   : field === "unitPrice"
                     ? item.quantity * Number(value)
-                    : item.total,
+                    : item.amount,
             }
           : item,
       ),
@@ -57,23 +59,25 @@ export function InvoiceTabsContainer({
   const saveChanges = () => {
     setInvoice({
       ...editedInvoice,
-      lineItems: editedLineItems,
-      subTotal: editedLineItems.reduce((sum, item) => sum + item.total, 0),
+      invoiceLineItem: editedLineItems,
+      subTotalAmount: editedLineItems.reduce(
+        (sum, item) => sum + item.amount,
+        0,
+      ),
     });
     setIsEditing(false);
   };
 
   const cancelChanges = () => {
     setEditedInvoice(invoice);
-    setEditedLineItems(invoice.lineItems);
+    setEditedLineItems(invoice.invoiceLineItem);
     setIsEditing(false);
   };
 
   return (
     <>
       <InvoiceHeader
-        invoiceId={invoice.id}
-        status={invoice.status}
+        invoice={invoice}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
         saveChanges={saveChanges}
@@ -98,7 +102,9 @@ export function InvoiceTabsContainer({
 
         <TabsContent value="line-items">
           <LineItems
-            lineItems={isEditing ? editedLineItems : invoice.lineItems}
+            invoiceLineItem={
+              isEditing ? editedLineItems : invoice.invoiceLineItem
+            }
             isEditing={isEditing}
             handleLineItemChange={handleLineItemChange}
           />

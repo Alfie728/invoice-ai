@@ -62,7 +62,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <SheetContent side="left" className="w-72">
                 <div className="flex items-center border-b pb-4">
                   <Link
-                    href="/"
+                    href="/dashboard"
                     className="flex items-center gap-2 font-semibold"
                   >
                     <FileText className="h-6 w-6" />
@@ -84,7 +84,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </nav>
               </SheetContent>
             </Sheet>
-            <Link href="/" className="flex items-center gap-2 font-semibold">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 font-semibold"
+            >
               <FileText className="h-6 w-6" />
               <span className="hidden text-lg font-bold md:inline-block">
                 InvoiceParser

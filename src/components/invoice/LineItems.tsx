@@ -11,17 +11,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { LineItemType } from "@/types/invoice";
+import type { InvoiceLineItem } from "@prisma/client";
 import { Trash } from "lucide-react";
 
 interface LineItemsProps {
-  lineItems: LineItemType[];
+  invoiceLineItem: InvoiceLineItem[];
   isEditing: boolean;
-  handleLineItemChange: (id: number, field: string, value: string | number) => void;
+  handleLineItemChange: (
+    id: string,
+    field: string,
+    value: string | number,
+  ) => void;
 }
 
 export function LineItems({
-  lineItems,
+  invoiceLineItem,
   isEditing,
   handleLineItemChange,
 }: LineItemsProps) {
@@ -43,14 +47,18 @@ export function LineItems({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {lineItems.map((item) => (
+            {invoiceLineItem.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
                   {isEditing ? (
                     <Input
                       value={item.description}
                       onChange={(e) =>
-                        handleLineItemChange(item.id, "description", e.target.value)
+                        handleLineItemChange(
+                          item.id,
+                          "description",
+                          e.target.value,
+                        )
                       }
                     />
                   ) : (
@@ -63,7 +71,11 @@ export function LineItems({
                       type="number"
                       value={item.quantity}
                       onChange={(e) =>
-                        handleLineItemChange(item.id, "quantity", e.target.value)
+                        handleLineItemChange(
+                          item.id,
+                          "quantity",
+                          e.target.value,
+                        )
                       }
                     />
                   ) : (
@@ -77,7 +89,11 @@ export function LineItems({
                       step="0.01"
                       value={item.unitPrice}
                       onChange={(e) =>
-                        handleLineItemChange(item.id, "unitPrice", e.target.value)
+                        handleLineItemChange(
+                          item.id,
+                          "unitPrice",
+                          e.target.value,
+                        )
                       }
                     />
                   ) : (
@@ -87,7 +103,7 @@ export function LineItems({
                 <TableCell>
                   {isEditing ? (
                     <Input
-                      value={item.glCode}
+                      value={item.glCode ?? ""}
                       onChange={(e) =>
                         handleLineItemChange(item.id, "glCode", e.target.value)
                       }
@@ -97,7 +113,7 @@ export function LineItems({
                   )}
                 </TableCell>
                 <TableCell className="text-right font-medium">
-                  ${item.total.toFixed(2)}
+                  ${item.amount.toFixed(2)}
                 </TableCell>
                 {isEditing && (
                   <TableCell>
@@ -120,4 +136,4 @@ export function LineItems({
       </CardContent>
     </Card>
   );
-} 
+}

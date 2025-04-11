@@ -5,10 +5,10 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Check, X } from "lucide-react";
+import type { Invoice } from "@prisma/client";
 
 interface InvoiceHeaderProps {
-  invoiceId: string;
-  status: string;
+  invoice: Invoice;
   isEditing: boolean;
   setIsEditing: (value: boolean) => void;
   saveChanges: () => void;
@@ -16,35 +16,34 @@ interface InvoiceHeaderProps {
 }
 
 export function InvoiceHeader({
-  invoiceId,
-  status,
+  invoice,
   isEditing,
   setIsEditing,
   saveChanges,
   cancelChanges,
 }: InvoiceHeaderProps) {
-  const isEditable = status === "pending";
+  const isEditable = invoice.invoiceStatus === "PENDING";
 
   return (
     <div className="mb-6 flex items-center justify-between">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" asChild>
-          <Link href="/">
+          <Link href="/dashboard">
             <ArrowLeft className="h-4 w-4" />
             <span className="sr-only">Back to invoices</span>
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold">Invoice {invoiceId}</h1>
+        <h1 className="text-2xl font-bold">Invoice {invoice.invoiceNumber}</h1>
         <Badge
           variant={
-            status === "approved"
+            invoice.invoiceStatus === "APPROVED"
               ? "default"
-              : status === "pending"
+              : invoice.invoiceStatus === "PENDING"
                 ? "outline"
                 : "destructive"
           }
         >
-          {status}
+          {invoice.invoiceStatus}
         </Badge>
       </div>
       <div className="flex gap-2">
@@ -63,7 +62,7 @@ export function InvoiceHeader({
             </Button>
           </>
         )}
-        {status === "pending" && (
+        {invoice.invoiceStatus === "PENDING" && (
           <>
             <Button variant="default">Approve</Button>
             <Button variant="destructive">Reject</Button>
@@ -72,4 +71,4 @@ export function InvoiceHeader({
       </div>
     </div>
   );
-} 
+}

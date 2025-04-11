@@ -32,55 +32,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Check, Edit, MoreHorizontal, X } from "lucide-react";
-
-// Sample invoice data
-const invoices = [
-  {
-    id: "INV-001",
-    date: "2023-04-15",
-    vendor: "Office Supplies Co.",
-    amount: 1250.0,
-    status: "approved",
-  },
-  {
-    id: "INV-002",
-    date: "2023-04-18",
-    vendor: "Tech Solutions Inc.",
-    amount: 3450.75,
-    status: "pending",
-  },
-  {
-    id: "INV-003",
-    date: "2023-04-20",
-    vendor: "Furniture Depot",
-    amount: 5670.5,
-    status: "rejected",
-  },
-  {
-    id: "INV-004",
-    date: "2023-04-22",
-    vendor: "Cleaning Services Ltd.",
-    amount: 850.25,
-    status: "approved",
-  },
-  {
-    id: "INV-005",
-    date: "2023-04-25",
-    vendor: "Marketing Agency",
-    amount: 2340.0,
-    status: "pending",
-  },
-  {
-    id: "INV-006",
-    date: "2023-04-28",
-    vendor: "Catering Company",
-    amount: 1560.75,
-    status: "pending",
-  },
-];
+import { api } from "@/trpc/react";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { data: invoices } = api.invoice.getAllInvoices.useQuery();
 
   const handleRowClick = (invoiceId: string, e: React.MouseEvent) => {
     // Prevent navigation if clicking on the dropdown menu
@@ -151,31 +107,33 @@ export default function DashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {invoices.map((invoice) => (
+                    {invoices?.map((invoice) => (
                       <TableRow
                         key={invoice.id}
                         onClick={(e) => handleRowClick(invoice.id, e)}
                         className="hover:bg-muted/50 cursor-pointer"
                       >
                         <TableCell className="font-medium">
-                          {invoice.id}
+                          {invoice.invoiceNumber}
                         </TableCell>
-                        <TableCell>{invoice.date}</TableCell>
-                        <TableCell>{invoice.vendor}</TableCell>
+                        <TableCell>
+                          {invoice.invoiceDate.toISOString().split("T")[0]}
+                        </TableCell>
+                        <TableCell>{invoice.vendorName}</TableCell>
                         <TableCell className="text-right">
-                          ${invoice.amount.toFixed(2)}
+                          ${invoice.totalAmount.toFixed(2)}
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant={
-                              invoice.status === "approved"
+                              invoice.invoiceStatus === "APPROVED"
                                 ? "default"
-                                : invoice.status === "pending"
+                                : invoice.invoiceStatus === "PENDING"
                                   ? "outline"
                                   : "destructive"
                             }
                           >
-                            {invoice.status}
+                            {invoice.invoiceStatus}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -199,7 +157,7 @@ export default function DashboardPage() {
                                   View details
                                 </Link>
                               </DropdownMenuItem>
-                              {invoice.status === "pending" && (
+                              {invoice.invoiceStatus === "PENDING" && (
                                 <>
                                   <DropdownMenuItem>
                                     <Edit className="mr-2 h-4 w-4" />
@@ -215,13 +173,13 @@ export default function DashboardPage() {
                                   </DropdownMenuItem>
                                 </>
                               )}
-                              {invoice.status === "approved" && (
+                              {invoice.invoiceStatus === "APPROVED" && (
                                 <DropdownMenuItem>
                                   <X className="mr-2 h-4 w-4" />
                                   Mark as rejected
                                 </DropdownMenuItem>
                               )}
-                              {invoice.status === "rejected" && (
+                              {invoice.invoiceStatus === "REJECTED" && (
                                 <DropdownMenuItem>
                                   <Check className="mr-2 h-4 w-4" />
                                   Mark as approved
@@ -259,7 +217,7 @@ export default function DashboardPage() {
                   </TableHeader>
                   <TableBody>
                     {invoices
-                      .filter((invoice) => invoice.status === "pending")
+                      ?.filter((invoice) => invoice.invoiceStatus === "PENDING")
                       .map((invoice) => (
                         <TableRow
                           key={invoice.id}
@@ -269,13 +227,17 @@ export default function DashboardPage() {
                           <TableCell className="font-medium">
                             {invoice.id}
                           </TableCell>
-                          <TableCell>{invoice.date}</TableCell>
-                          <TableCell>{invoice.vendor}</TableCell>
+                          <TableCell>
+                            {invoice.invoiceDate.toISOString().split("T")[0]}
+                          </TableCell>
+                          <TableCell>{invoice.vendorName}</TableCell>
                           <TableCell className="text-right">
-                            ${invoice.amount.toFixed(2)}
+                            ${invoice.totalAmount.toFixed(2)}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">pending</Badge>
+                            <Badge variant="outline">
+                              {invoice.invoiceStatus}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -342,7 +304,9 @@ export default function DashboardPage() {
                   </TableHeader>
                   <TableBody>
                     {invoices
-                      .filter((invoice) => invoice.status === "approved")
+                      ?.filter(
+                        (invoice) => invoice.invoiceStatus === "APPROVED",
+                      )
                       .map((invoice) => (
                         <TableRow
                           key={invoice.id}
@@ -352,13 +316,17 @@ export default function DashboardPage() {
                           <TableCell className="font-medium">
                             {invoice.id}
                           </TableCell>
-                          <TableCell>{invoice.date}</TableCell>
-                          <TableCell>{invoice.vendor}</TableCell>
+                          <TableCell>
+                            {invoice.invoiceDate.toISOString().split("T")[0]}
+                          </TableCell>
+                          <TableCell>{invoice.vendorName}</TableCell>
                           <TableCell className="text-right">
-                            ${invoice.amount.toFixed(2)}
+                            ${invoice.totalAmount.toFixed(2)}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="default">approved</Badge>
+                            <Badge variant="default">
+                              {invoice.invoiceStatus}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -417,7 +385,9 @@ export default function DashboardPage() {
                   </TableHeader>
                   <TableBody>
                     {invoices
-                      .filter((invoice) => invoice.status === "rejected")
+                      ?.filter(
+                        (invoice) => invoice.invoiceStatus === "REJECTED",
+                      )
                       .map((invoice) => (
                         <TableRow
                           key={invoice.id}
@@ -427,13 +397,17 @@ export default function DashboardPage() {
                           <TableCell className="font-medium">
                             {invoice.id}
                           </TableCell>
-                          <TableCell>{invoice.date}</TableCell>
-                          <TableCell>{invoice.vendor}</TableCell>
+                          <TableCell>
+                            {invoice.invoiceDate.toISOString().split("T")[0]}
+                          </TableCell>
+                          <TableCell>{invoice.vendorName}</TableCell>
                           <TableCell className="text-right">
-                            ${invoice.amount.toFixed(2)}
+                            ${invoice.totalAmount.toFixed(2)}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="destructive">rejected</Badge>
+                            <Badge variant="destructive">
+                              {invoice.invoiceStatus}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
