@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, FileText, Users } from "lucide-react";
 
-export function InvoiceHistory() {
+export function InvoiceHistory({ invoiceId }: { invoiceId: string }) {
   return (
     <Card>
       <CardHeader>
@@ -48,4 +48,4 @@ export function InvoiceHistory() {
       </CardContent>
     </Card>
   );
-} 
+}

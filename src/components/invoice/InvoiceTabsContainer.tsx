@@ -7,14 +7,33 @@ import { LineItems } from "./LineItems";
 import { InvoiceHistory } from "./InvoiceHistory";
 import { InvoiceHeader } from "./InvoiceHeader";
 import type { Invoice, InvoiceLineItem } from "@prisma/client";
+import { api } from "@/trpc/react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface InvoiceTabsContainerProps {
-  initialInvoice: Invoice & { invoiceLineItem: InvoiceLineItem[] };
+  invoiceId: string;
 }
 
-export function InvoiceTabsContainer({
+export function InvoiceTabsContainer({ invoiceId }: InvoiceTabsContainerProps) {
+  // Client-side data fetching
+  const { data: invoice, isLoading } = api.invoice.getInvoiceById.useQuery({
+    id: invoiceId,
+  });
+
+  // We'll only render the editing components when we have data
+  if (isLoading || !invoice) {
+    return <InvoiceLoadingSkeleton />;
+  }
+
+  return <InvoiceContent initialInvoice={invoice} />;
+}
+
+// Separate component for the actual invoice content
+function InvoiceContent({
   initialInvoice,
-}: InvoiceTabsContainerProps) {
+}: {
+  initialInvoice: Invoice & { invoiceLineItem: InvoiceLineItem[] };
+}) {
   const [invoice, setInvoice] = useState(initialInvoice);
   const [isEditing, setIsEditing] = useState(false);
   const [editedInvoice, setEditedInvoice] = useState(invoice);
@@ -87,20 +106,16 @@ export function InvoiceTabsContainer({
       <Tabs defaultValue="details" className="space-y-4">
         <TabsList>
           <TabsTrigger value="details">Invoice Details</TabsTrigger>
-          <TabsTrigger value="line-items">Line Items</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details">
+        <TabsContent value="details" className="space-y-4">
           <InvoiceDetails
             invoice={invoice}
             isEditing={isEditing}
             editedInvoice={editedInvoice}
             handleInvoiceChange={handleInvoiceChange}
           />
-        </TabsContent>
-
-        <TabsContent value="line-items">
           <LineItems
             invoiceLineItem={
               isEditing ? editedLineItems : invoice.invoiceLineItem
@@ -111,9 +126,41 @@ export function InvoiceTabsContainer({
         </TabsContent>
 
         <TabsContent value="history">
-          <InvoiceHistory />
+          <InvoiceHistory invoiceId={invoice.id} />
         </TabsContent>
       </Tabs>
     </>
+  );
+}
+
+// Loading skeleton component
+function InvoiceLoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Header skeleton */}
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+
+      {/* Tabs skeleton */}
+      <div>
+        <div className="mb-4 flex gap-2">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+
+        {/* Invoice details skeleton */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+
+          {/* Line items skeleton */}
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </div>
+    </div>
   );
 }
