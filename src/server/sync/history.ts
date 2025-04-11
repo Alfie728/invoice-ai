@@ -6,13 +6,11 @@ import {
   type EmailMetadata,
 } from "@/server/mail/parse";
 import { composeMail } from "@/server/mail/compose";
-import { db } from "../db";
-import { processInvoice } from "@/server/ai/openrouter";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-
-import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { db } from "@/server/db";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client } from "@/server/auth/s3Client";
-import { env } from "process";
+import { env } from "@/env";
+import { processInvoice } from "@/server/ai/dify";
 
 export async function processHistories(
   gmail: gmail_v1.Gmail,
@@ -109,100 +107,12 @@ export async function processHistories(
               }),
             );
 
-            // Then generate a presigned URL for the already uploaded file
-            const command = new GetObjectCommand({
-              Bucket: env.BUCKET_NAME,
-              Key: key,
-            });
-
-            const presignedUrl = await getSignedUrl(s3Client, command, {
-              expiresIn: 3600,
-            });
-
-            console.log("Generated presigned URL:", presignedUrl);
-
-            // Create a FormData object for the file upload
-            const formData = new FormData();
-
-            // In Node.js environment, use Blob instead of File
-            const pdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
-            // The third parameter to append() sets the filename
-            formData.append(
-              "file",
-              pdfBlob,
+            const response = await processInvoice(
+              pdfBuffer,
               attachment.filename ?? "invoice.pdf",
             );
-            formData.append("user", "invoice06@gmail.com");
 
-            // Upload the file to Dify
-            const fileUploadResponse = await fetch(
-              "https://api.dify.ai/v1/files/upload",
-              {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${env.DIFY_API_KEY}`,
-                },
-                body: formData,
-              },
-            );
-
-            // Define a type for the file upload response
-            interface DifyFileUploadResponse {
-              id: string;
-              name: string;
-              size: number;
-              extension: string;
-              mime_type: string;
-              created_by: string;
-              created_at: number;
-            }
-
-            const fileUploadData =
-              (await fileUploadResponse.json()) as DifyFileUploadResponse;
-            console.log("File uploaded to Dify:", fileUploadData);
-
-            // Call Dify API with the uploaded file ID
-            const aiResponse = await fetch(
-              "https://api.dify.ai/v1/workflows/run",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${env.DIFY_API_KEY}`,
-                },
-                body: JSON.stringify({
-                  inputs: {
-                    file: [
-                      {
-                        transfer_method: "local_file",
-                        upload_file_id: fileUploadData.id,
-                        type: "document",
-                      },
-                    ],
-                  },
-                  response_mode: "blocking",
-                  user: "invoice06@gmail.com",
-                }),
-              },
-            );
-
-            // Define a type for the AI response data
-            interface DifyResponse {
-              data: {
-                outputs: {
-                  text: string;
-                };
-              };
-            }
-
-            const aiResponseData = (await aiResponse.json()) as DifyResponse;
-            console.log(aiResponseData);
-
-            // Extract the AI response text using optional chaining
-            const answer = aiResponseData?.data?.outputs?.text;
-            aiResponseText =
-              answer ??
-              "Sorry, I couldn't process your invoice. Please make sure it's a valid PDF document.";
+            aiResponseText = response.data.outputs.text;
           } catch (error) {
             console.error("Error processing PDF attachment:", error);
             aiResponseText =
