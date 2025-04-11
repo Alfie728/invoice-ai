@@ -15,7 +15,7 @@ interface NotificationEntry {
 }
 
 // Configuration
-const DEBOUNCE_DELAY_MS = 5000; // 5 seconds delay
+const DEBOUNCE_DELAY_MS = 1000; // 1 seconds delay
 
 // In-memory store for pending notifications, keyed by email address
 const pendingNotifications = new Map<string, NotificationEntry>();

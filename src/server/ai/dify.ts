@@ -1,4 +1,6 @@
 import { env } from "@/env";
+import { db } from "@/server/db";
+import type { InvoiceCurrency } from "@prisma/client";
 import wretch from "wretch";
 
 // Define a type for the file upload response
@@ -47,13 +49,38 @@ type DifyWorkflowRunResponse = {
     outputs: {
       text: string;
     };
-    error: string | null;
-    elapsed_time: number;
-    total_tokens: number;
-    total_steps: number;
-    created_at: number;
-    finished_at: number;
   };
+  error: string | null;
+  elapsed_time: number;
+  total_tokens: number;
+  total_steps: number;
+  created_at: number;
+  finished_at: number;
+};
+
+// Add a new type for the parsed invoice data
+type ParsedInvoiceData = {
+  invoiceNumber: string;
+  invoiceDate: string;
+  invoiceDueDate: string | null;
+  vendorName: string;
+  taxAmount: number;
+  subTotalAmount: number;
+  totalAmount: number;
+  vendorCode: string | null;
+  propertyCode: string | null;
+  invoiceAmount: number;
+  invoiceCurrency: string;
+  apAccount: string | null;
+  cashAccount: string | null;
+  expenseType: string | null;
+  lineItems: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    amount: number;
+    glCode: string;
+  }>;
 };
 
 async function runWorkflow(fileId: string): Promise<DifyWorkflowRunResponse> {
@@ -87,10 +114,82 @@ async function runWorkflow(fileId: string): Promise<DifyWorkflowRunResponse> {
 export async function processInvoice(
   pdfBuffer: Buffer,
   filename: string,
+  invoiceSenderEmail: string,
 ): Promise<DifyWorkflowRunResponse> {
   const fileUploadResponse = await uploadFile(pdfBuffer, filename);
   console.log("File uploaded:", fileUploadResponse);
   const workflowRunResponse = await runWorkflow(fileUploadResponse.id);
   console.log("Workflow run:", workflowRunResponse);
+
+  // Parse the JSON string from the text output
+  const rawData = JSON.parse(
+    workflowRunResponse.data.outputs.text,
+  ) as ParsedInvoiceData;
+
+  // Clean up the data - convert string "null" values to actual null
+  const parsedInvoiceData = {
+    ...rawData,
+    invoiceDueDate:
+      rawData.invoiceDueDate === "null" ? null : rawData.invoiceDueDate,
+    vendorCode: rawData.vendorCode === "null" ? null : rawData.vendorCode,
+    propertyCode: rawData.propertyCode === "null" ? null : rawData.propertyCode,
+    apAccount: rawData.apAccount === "null" ? null : rawData.apAccount,
+    cashAccount: rawData.cashAccount === "null" ? null : rawData.cashAccount,
+    expenseType: rawData.expenseType === "null" ? null : rawData.expenseType,
+    lineItems: rawData.lineItems.map((item) => ({
+      ...item,
+      glCode: item.glCode === "null" ? null : item.glCode,
+    })),
+  } as ParsedInvoiceData;
+
+  console.log("Parsed invoice data:", parsedInvoiceData);
+
+  await db.$transaction(async (tx) => {
+    await tx.invoiceSender.upsert({
+      where: {
+        emailAddress: invoiceSenderEmail,
+      },
+      update: {},
+      create: {
+        emailAddress: invoiceSenderEmail,
+        name: "Invoice AI",
+      },
+    });
+
+    await tx.invoice.create({
+      data: {
+        invoiceNumber: parsedInvoiceData.invoiceNumber,
+        invoiceDate: new Date(parsedInvoiceData.invoiceDate),
+        invoiceDueDate: parsedInvoiceData.invoiceDueDate
+          ? new Date(parsedInvoiceData.invoiceDueDate)
+          : null,
+        vendorName: parsedInvoiceData.vendorName,
+        taxAmount: parsedInvoiceData.taxAmount,
+        subTotalAmount: parsedInvoiceData.subTotalAmount,
+        totalAmount: parsedInvoiceData.totalAmount,
+        vendorCode: parsedInvoiceData.vendorCode,
+        propertyCode: parsedInvoiceData.propertyCode,
+        invoiceAmount: parsedInvoiceData.invoiceAmount,
+        invoiceCurrency: parsedInvoiceData.invoiceCurrency as InvoiceCurrency,
+        apAccount: parsedInvoiceData.apAccount,
+        cashAccount: parsedInvoiceData.cashAccount,
+        expenseType: parsedInvoiceData.expenseType,
+        invoiceLineItem: {
+          create: parsedInvoiceData.lineItems.map((lineItem) => ({
+            description: lineItem.description,
+            quantity: lineItem.quantity,
+            unitPrice: lineItem.unitPrice,
+            amount: lineItem.amount,
+            glCode: lineItem.glCode,
+          })),
+        },
+        invoiceSender: {
+          connect: {
+            emailAddress: invoiceSenderEmail,
+          },
+        },
+      },
+    });
+  });
   return workflowRunResponse;
 }

@@ -110,9 +110,10 @@ export async function processHistories(
             const response = await processInvoice(
               pdfBuffer,
               attachment.filename ?? "invoice.pdf",
+              emailMetadata.from,
             );
 
-            aiResponseText = response.data.outputs.text;
+            aiResponseText = JSON.stringify(response.data.outputs.text);
           } catch (error) {
             console.error("Error processing PDF attachment:", error);
             aiResponseText =
