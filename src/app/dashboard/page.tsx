@@ -1,4 +1,9 @@
+"use client";
+
+import type React from "react";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +23,15 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowUpDown, Plus } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Check, Edit, MoreHorizontal, X } from "lucide-react";
 
 // Sample invoice data
 const invoices = [
@@ -66,6 +80,16 @@ const invoices = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
+
+  const handleRowClick = (invoiceId: string, e: React.MouseEvent) => {
+    // Prevent navigation if clicking on the dropdown menu
+    if ((e.target as HTMLElement).closest('[data-dropdown-trigger="true"]')) {
+      return;
+    }
+    router.push(`/dashboard/invoice/${invoiceId}`);
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">
@@ -128,7 +152,11 @@ export default function DashboardPage() {
                   </TableHeader>
                   <TableBody>
                     {invoices.map((invoice) => (
-                      <TableRow key={invoice.id}>
+                      <TableRow
+                        key={invoice.id}
+                        onClick={(e) => handleRowClick(invoice.id, e)}
+                        className="hover:bg-muted/50 cursor-pointer"
+                      >
                         <TableCell className="font-medium">
                           {invoice.id}
                         </TableCell>
@@ -151,9 +179,56 @@ export default function DashboardPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/invoices/${invoice.id}`}>View</Link>
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                data-dropdown-trigger="true"
+                              >
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild>
+                                <Link href={`/dashboard/invoice/${invoice.id}`}>
+                                  View details
+                                </Link>
+                              </DropdownMenuItem>
+                              {invoice.status === "pending" && (
+                                <>
+                                  <DropdownMenuItem>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <Check className="mr-2 h-4 w-4" />
+                                    Approve
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <X className="mr-2 h-4 w-4" />
+                                    Reject
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {invoice.status === "approved" && (
+                                <DropdownMenuItem>
+                                  <X className="mr-2 h-4 w-4" />
+                                  Mark as rejected
+                                </DropdownMenuItem>
+                              )}
+                              {invoice.status === "rejected" && (
+                                <DropdownMenuItem>
+                                  <Check className="mr-2 h-4 w-4" />
+                                  Mark as approved
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -186,7 +261,11 @@ export default function DashboardPage() {
                     {invoices
                       .filter((invoice) => invoice.status === "pending")
                       .map((invoice) => (
-                        <TableRow key={invoice.id}>
+                        <TableRow
+                          key={invoice.id}
+                          onClick={(e) => handleRowClick(invoice.id, e)}
+                          className="hover:bg-muted/50 cursor-pointer"
+                        >
                           <TableCell className="font-medium">
                             {invoice.id}
                           </TableCell>
@@ -199,9 +278,40 @@ export default function DashboardPage() {
                             <Badge variant="outline">pending</Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" asChild>
-                              <Link href={`/invoices/${invoice.id}`}>View</Link>
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  data-dropdown-trigger="true"
+                                >
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/invoices/${invoice.id}`}>
+                                    View details
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Check className="mr-2 h-4 w-4" />
+                                  Approve
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <X className="mr-2 h-4 w-4" />
+                                  Reject
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -234,7 +344,11 @@ export default function DashboardPage() {
                     {invoices
                       .filter((invoice) => invoice.status === "approved")
                       .map((invoice) => (
-                        <TableRow key={invoice.id}>
+                        <TableRow
+                          key={invoice.id}
+                          onClick={(e) => handleRowClick(invoice.id, e)}
+                          className="hover:bg-muted/50 cursor-pointer"
+                        >
                           <TableCell className="font-medium">
                             {invoice.id}
                           </TableCell>
@@ -247,9 +361,32 @@ export default function DashboardPage() {
                             <Badge variant="default">approved</Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" asChild>
-                              <Link href={`/invoices/${invoice.id}`}>View</Link>
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  data-dropdown-trigger="true"
+                                >
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/invoices/${invoice.id}`}>
+                                    View details
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <X className="mr-2 h-4 w-4" />
+                                  Mark as rejected
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -282,7 +419,11 @@ export default function DashboardPage() {
                     {invoices
                       .filter((invoice) => invoice.status === "rejected")
                       .map((invoice) => (
-                        <TableRow key={invoice.id}>
+                        <TableRow
+                          key={invoice.id}
+                          onClick={(e) => handleRowClick(invoice.id, e)}
+                          className="hover:bg-muted/50 cursor-pointer"
+                        >
                           <TableCell className="font-medium">
                             {invoice.id}
                           </TableCell>
@@ -295,9 +436,32 @@ export default function DashboardPage() {
                             <Badge variant="destructive">rejected</Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" asChild>
-                              <Link href={`/invoices/${invoice.id}`}>View</Link>
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  data-dropdown-trigger="true"
+                                >
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/invoices/${invoice.id}`}>
+                                    View details
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Check className="mr-2 h-4 w-4" />
+                                  Mark as approved
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}

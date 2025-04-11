@@ -25,11 +25,6 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    title: "Dashboard",
-    href: "/",
-    icon: Home,
-  },
-  {
     title: "Invoices",
     href: "/invoices",
     icon: FileText,
@@ -44,18 +39,18 @@ const navItems: NavItem[] = [
     href: "/reports",
     icon: BarChart,
   },
-  {
-    title: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Settings",
+  //   href: "/settings",
+  //   icon: Settings,
+  // },
 ];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="bg-background sticky top-0 z-40 border-b">
-        <div className="container flex h-16 items-center justify-between py-4">
+        <div className="mx-auto flex h-16 items-center justify-between px-8 py-4">
           <div className="flex items-center gap-2">
             <Sheet>
               <SheetTrigger asChild>
@@ -110,8 +105,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <div className="flex flex-1">
-        <aside className="bg-muted/40 hidden w-64 flex-col border-r md:flex">
-          <nav className="flex-1 space-y-1 p-4">
+        <aside className="bg-muted/40 hidden w-52 flex-col border-r md:flex">
+          <nav className="flex-1 space-y-1 px-5 py-4">
             {navItems.map((item) => (
               <SidebarNavLink key={item.href} item={item} />
             ))}
