@@ -102,7 +102,6 @@ model Invoice {
     // Coding Information
     vendorCode      String? // Made optional as might not be available for all vendors
     propertyCode    String? // Made optional as might not apply to all invoices
-    invoiceAmount   Float // Consider removing if redundant with totalAmount
     invoiceCurrency InvoiceCurrency   @default(USD) // Added default value
     apAccount       String? // Made optional as might not be available initially
     cashAccount     String? // Made optional as might not be available initially

@@ -66,10 +66,8 @@ type ParsedInvoiceData = {
   vendorName: string;
   taxAmount: number;
   subTotalAmount: number;
-  totalAmount: number;
   vendorCode: string | null;
   propertyCode: string | null;
-  invoiceAmount: number;
   invoiceCurrency: string;
   apAccount: string | null;
   cashAccount: string | null;
@@ -166,10 +164,8 @@ export async function processInvoice(
         vendorName: parsedInvoiceData.vendorName,
         taxAmount: parsedInvoiceData.taxAmount,
         subTotalAmount: parsedInvoiceData.subTotalAmount,
-        totalAmount: parsedInvoiceData.totalAmount,
         vendorCode: parsedInvoiceData.vendorCode,
         propertyCode: parsedInvoiceData.propertyCode,
-        invoiceAmount: parsedInvoiceData.invoiceAmount,
         invoiceCurrency: parsedInvoiceData.invoiceCurrency as InvoiceCurrency,
         apAccount: parsedInvoiceData.apAccount,
         cashAccount: parsedInvoiceData.cashAccount,
@@ -179,7 +175,6 @@ export async function processInvoice(
             description: lineItem.description,
             quantity: lineItem.quantity,
             unitPrice: lineItem.unitPrice,
-            amount: lineItem.amount,
             glCode: lineItem.glCode,
           })),
         },
