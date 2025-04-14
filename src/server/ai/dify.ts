@@ -59,12 +59,14 @@ type DifyWorkflowRunResponse = {
 };
 
 // Add a new type for the parsed invoice data
-type ParsedInvoiceData = {
+export type ParsedInvoiceData = {
   invoiceNumber: string;
   invoiceDate: string;
   invoiceDueDate: string | null;
   vendorName: string;
   taxAmount: number;
+  subTotalAmount: number;
+  totalAmount: number;
   vendorCode: string | null;
   propertyCode: string | null;
   invoiceCurrency: string;
@@ -76,7 +78,7 @@ type ParsedInvoiceData = {
     quantity: number;
     unitPrice: number;
     amount: number;
-    glCode: string;
+    glCode: string | null;
   }>;
 };
 
@@ -112,7 +114,7 @@ export async function processInvoice(
   pdfBuffer: Buffer,
   filename: string,
   invoiceSenderEmail: string,
-): Promise<DifyWorkflowRunResponse> {
+): Promise<DifyWorkflowRunResponse & { invoiceId: string }> {
   const fileUploadResponse = await uploadFile(pdfBuffer, filename);
   console.log("File uploaded:", fileUploadResponse);
   const workflowRunResponse = await runWorkflow(fileUploadResponse.id);
@@ -141,7 +143,7 @@ export async function processInvoice(
 
   console.log("Parsed invoice data:", parsedInvoiceData);
 
-  await db.$transaction(async (tx) => {
+  const invoice = await db.$transaction(async (tx) => {
     await tx.invoiceSender.upsert({
       where: {
         emailAddress: invoiceSenderEmail,
@@ -153,7 +155,7 @@ export async function processInvoice(
       },
     });
 
-    await tx.invoice.create({
+    return tx.invoice.create({
       data: {
         invoiceNumber: parsedInvoiceData.invoiceNumber,
         invoiceDate: new Date(parsedInvoiceData.invoiceDate),
@@ -184,5 +186,5 @@ export async function processInvoice(
       },
     });
   });
-  return workflowRunResponse;
+  return { ...workflowRunResponse, invoiceId: invoice.id };
 }

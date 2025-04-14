@@ -2,6 +2,7 @@ import { simpleParser, type ParsedMail, type Attachment } from "mailparser";
 import { toByteArray } from "base64-js";
 
 export type EmailMetadata = {
+  invoiceId: string;
   subject: string;
   from: string;
   date: string;
@@ -28,6 +29,7 @@ export function extractPdfAttachment(parsedEmail: ParsedMail): Attachment[] {
 
 export function extractEmailMetadata(parsedEmail: ParsedMail): EmailMetadata {
   return {
+    invoiceId: "",
     subject: parsedEmail.subject ?? "",
     from: parsedEmail.from?.value?.[0]?.address ?? "",
     date: parsedEmail.date?.toISOString() ?? "",

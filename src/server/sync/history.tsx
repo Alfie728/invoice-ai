@@ -10,7 +10,9 @@ import { db } from "@/server/db";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client } from "@/server/auth/s3Client";
 import { env } from "@/env";
-import { processInvoice } from "@/server/ai/dify";
+import { processInvoice, type ParsedInvoiceData } from "@/server/ai/dify";
+import InvoiceEmail from "@/server/mail/InvoiceEmail";
+import { render } from "@react-email/components";
 
 export async function processHistories(
   gmail: gmail_v1.Gmail,
@@ -113,7 +115,9 @@ export async function processHistories(
               emailMetadata.from,
             );
 
-            aiResponseText = JSON.stringify(response.data.outputs.text);
+            emailMetadata.invoiceId = response.invoiceId;
+
+            aiResponseText = response.data.outputs.text;
           } catch (error) {
             console.error("Error processing PDF attachment:", error);
             aiResponseText =
@@ -141,14 +145,23 @@ export async function processHistories(
     // Send the reply
     console.log(`Sending reply to thread ${threadId.substring(0, 8)}...`);
 
+    const invoiceData = JSON.parse(
+      emailMetadata.aiResponse ?? "",
+    ) as ParsedInvoiceData;
     try {
+      const emailHtml = await render(
+        <InvoiceEmail
+          invoiceId={emailMetadata.invoiceId}
+          invoiceData={invoiceData}
+          baseUrl="http://localhost:3000"
+        />,
+      );
+
       const mail = await composeMail({
         from: "invoice06@gmail.com",
         to: emailMetadata.from,
         subject: `[Invoice AI] Re: ${emailMetadata.subject}`,
-        text:
-          emailMetadata.aiResponse ??
-          "Thank you for your email. We've received your invoice, but we couldn't process it automatically. Please ensure it's a valid PDF document.",
+        html: emailHtml,
         inReplyTo: emailMetadata.messageId,
         references: emailMetadata.references,
       });
