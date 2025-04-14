@@ -17,7 +17,6 @@ import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useDebounce } from "@uidotdev/usehooks";
-import { type } from "os";
 
 interface LineItemsProps {
   invoiceLineItems: InvoiceLineItem[];
@@ -77,6 +76,7 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
   const utils = api.useUtils();
   const { mutate: updateInvoiceItem } =
     api.invoice.updateInvoiceItem.useMutation({
+      // Optimistic update the subtotal amount
       onMutate: () => {
         const previousInvoice = utils.invoice.getInvoiceById.getData({
           id: invoiceLineItem.invoiceId,
@@ -165,11 +165,11 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
             name="unitPrice"
             type="number"
             step="0.01"
-            value={localInvoiceLineItem.unitPrice}
+            value={localInvoiceLineItem.unitPrice.toFixed(2)}
             onChange={handleLineItemChange}
           />
         ) : (
-          `$${localInvoiceLineItem.unitPrice.toFixed(2)}`
+          localInvoiceLineItem.unitPrice.toFixed(2)
         )}
       </TableCell>
       <TableCell>
@@ -184,7 +184,9 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
         )}
       </TableCell>
       <TableCell className="text-right font-medium">
-        ${localInvoiceLineItem.unitPrice * localInvoiceLineItem.quantity}
+        {(
+          localInvoiceLineItem.unitPrice * localInvoiceLineItem.quantity
+        ).toFixed(2)}
       </TableCell>
       {isEditing && (
         <TableCell>

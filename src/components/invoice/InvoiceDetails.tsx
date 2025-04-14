@@ -180,7 +180,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="sub-total"
               name="subTotalAmount"
               type="number"
-              value={invoice.subTotalAmount.toString()}
+              value={invoice.subTotalAmount.toFixed(2)}
               onChange={handleInvoiceChange}
               disabled
             />
@@ -192,7 +192,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="tax-amount"
               name="taxAmount"
               type="number"
-              value={localInvoice.taxAmount?.toString() ?? ""}
+              value={localInvoice.taxAmount?.toFixed(2) ?? ""}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -204,9 +204,9 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="total-amount"
               name="totalAmount"
               type="number"
-              value={
-                localInvoice.subTotalAmount + (localInvoice.taxAmount ?? 0)
-              }
+              value={(
+                invoice.subTotalAmount + (invoice.taxAmount ?? 0)
+              ).toFixed(2)}
               disabled
               className="font-bold"
             />
