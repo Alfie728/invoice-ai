@@ -66,7 +66,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     className="flex items-center gap-2 font-semibold"
                   >
                     <FileText className="h-6 w-6" />
-                    <span className="text-lg font-bold">InvoiceParser</span>
+                    <span className="text-lg font-bold">Invoice Parser</span>
                   </Link>
                   <Sheet>
                     <SheetTrigger asChild>
@@ -90,7 +90,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             >
               <FileText className="h-6 w-6" />
               <span className="hidden text-lg font-bold md:inline-block">
-                InvoiceParser
+                Invoice Parser
               </span>
             </Link>
           </div>

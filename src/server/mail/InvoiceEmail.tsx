@@ -56,7 +56,7 @@ export default function InvoiceEmail({
 
   // Helper function to format monetary values with currency
   const formatCurrency = (amount: string | number) => {
-    if (!amount) return "";
+    if (!amount) return "0.00";
     return `${amount} ${invoiceCurrency || ""}`.trim();
   };
 
@@ -66,7 +66,7 @@ export default function InvoiceEmail({
       <Preview>{previewText}</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={logo}>Invoice AI</Heading>
+          <Heading style={logo}>Invoice Parser</Heading>
 
           <Heading style={heading}>Invoice Processed Successfully</Heading>
           <Text style={date}>March 31, 2025</Text>
@@ -295,7 +295,7 @@ export default function InvoiceEmail({
 
               <Column style={buttonColumn}>
                 <Button
-                  href={`${baseUrl}/dashboard/invoice/${invoiceId}`}
+                  href={`${baseUrl}/dashboard/invoice/${invoiceId}/reject`}
                   style={rejectButton}
                 >
                   REJECT INVOICE
