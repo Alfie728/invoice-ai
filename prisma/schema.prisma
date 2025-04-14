@@ -98,7 +98,6 @@ model Invoice {
     invoiceDueDate  DateTime? // Made optional as not all invoices have due dates
     vendorName      String
     taxAmount       Float? // Made optional as not all invoices have tax
-    subTotalAmount  Float
     // Coding Information
     vendorCode      String? // Made optional as might not be available for all vendors
     propertyCode    String? // Made optional as might not apply to all invoices

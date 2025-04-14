@@ -5,12 +5,24 @@ import { z } from "zod";
 
 export const invoiceRouter = createTRPCRouter({
   getAllInvoices: publicProcedure.query(async ({ ctx }) => {
-    const invoices = await ctx.db.invoice.findMany({});
+    const invoices = await ctx.db.invoice.findMany({
+      include: {
+        invoiceLineItem: true,
+      },
+    });
     if (!invoices) {
       throw new TRPCError({ code: "NOT_FOUND", message: "No invoices found" });
     }
-    return invoices;
+
+    return invoices.map((invoice) => ({
+      ...invoice,
+      subTotalAmount: invoice.invoiceLineItem.reduce(
+        (acc, item) => acc + item.unitPrice * item.quantity,
+        0,
+      ),
+    }));
   }),
+
   getInvoiceById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -28,7 +40,16 @@ export const invoiceRouter = createTRPCRouter({
           message: "Invoice not found",
         });
       }
-      return invoice;
+      // Calculate the subtotal of the invoice
+      const subTotalAmount = invoice.invoiceLineItem.reduce(
+        (acc, item) => acc + item.unitPrice * item.quantity,
+        0,
+      );
+
+      return {
+        ...invoice,
+        subTotalAmount,
+      };
     }),
 
   updateInvoice: publicProcedure
@@ -41,7 +62,6 @@ export const invoiceRouter = createTRPCRouter({
           invoiceDueDate: z.date().nullable(),
           vendorName: z.string(),
           taxAmount: z.number().nullable(),
-          subTotalAmount: z.number(),
           invoiceStatus: z.nativeEnum(InvoiceStatus),
           vendorCode: z.string().nullable(),
           propertyCode: z.string().nullable(),
@@ -70,6 +90,7 @@ export const invoiceRouter = createTRPCRouter({
     .input(
       z.object({
         invoiceId: z.string(),
+        id: z.string(),
         data: z.object({
           description: z.string(),
           quantity: z.number(),
@@ -79,9 +100,9 @@ export const invoiceRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { invoiceId, data } = input;
+      const { invoiceId, id, data } = input;
       const updatedInvoiceItem = await ctx.db.invoiceLineItem.update({
-        where: { id: invoiceId },
+        where: { invoiceId, id },
         data,
       });
       return updatedInvoiceItem;

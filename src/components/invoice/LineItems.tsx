@@ -15,7 +15,9 @@ import type { InvoiceLineItem } from "@prisma/client";
 import { Trash } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDebounce } from "@uidotdev/usehooks";
+import { type } from "os";
 
 interface LineItemsProps {
   invoiceLineItems: InvoiceLineItem[];
@@ -67,21 +69,43 @@ interface LineItemProps {
 }
 
 export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
-  const [localDescription, setLocalDescription] = useState(
-    invoiceLineItem.description,
-  );
-  const [localQuantity, setLocalQuantity] = useState(invoiceLineItem.quantity);
-  const [localUnitPrice, setLocalUnitPrice] = useState(
-    invoiceLineItem.unitPrice,
-  );
-  const [localGlCode, setLocalGlCode] = useState(invoiceLineItem.glCode);
-  const [localAmount, setLocalAmount] = useState(
-    invoiceLineItem.unitPrice * invoiceLineItem.quantity,
-  );
+  const [localInvoiceLineItem, setLocalInvoiceLineItem] =
+    useState(invoiceLineItem);
+
+  const debouncedInvoiceLineItem = useDebounce(localInvoiceLineItem, 800);
 
   const utils = api.useUtils();
   const { mutate: updateInvoiceItem } =
     api.invoice.updateInvoiceItem.useMutation({
+      onMutate: () => {
+        const previousInvoice = utils.invoice.getInvoiceById.getData({
+          id: invoiceLineItem.invoiceId,
+        });
+        if (!previousInvoice) {
+          throw new Error("Previous invoice not found");
+        }
+
+        // Create updated line items array
+        const updatedLineItems = previousInvoice.invoiceLineItem.map((item) =>
+          item.id === invoiceLineItem.id ? debouncedInvoiceLineItem : item,
+        );
+
+        // Calculate new subTotalAmount
+        const newSubTotalAmount = updatedLineItems.reduce(
+          (acc, item) => acc + item.unitPrice * item.quantity,
+          0,
+        );
+
+        // Update the cache
+        utils.invoice.getInvoiceById.setData(
+          { id: invoiceLineItem.invoiceId },
+          {
+            ...previousInvoice,
+            subTotalAmount: newSubTotalAmount,
+            invoiceLineItem: updatedLineItems,
+          },
+        );
+      },
       onSuccess: () => {
         toast.success("Invoice item updated successfully");
         void utils.invoice.getInvoiceById.invalidate();
@@ -91,26 +115,33 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
       },
     });
 
-  const handleLineItemChange = (
-    id: string,
-    field: string,
-    value: string | number,
-  ) => {
-    console.log(id, field, value);
+  const handleLineItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
+    // console.log(name, value, type);
+    const parsedValue =
+      type === "number" ? (value === "" ? null : parseFloat(value)) : value;
+    setLocalInvoiceLineItem({
+      ...localInvoiceLineItem,
+      [name]: parsedValue,
+    });
   };
+
+  useEffect(() => {
+    updateInvoiceItem({
+      invoiceId: invoiceLineItem.invoiceId,
+      id: invoiceLineItem.id,
+      data: debouncedInvoiceLineItem,
+    });
+  }, [debouncedInvoiceLineItem]);
+
   return (
     <TableRow key={invoiceLineItem.id}>
       <TableCell>
         {isEditing ? (
           <Input
-            value={localDescription}
-            onChange={(e) =>
-              handleLineItemChange(
-                invoiceLineItem.id,
-                "description",
-                e.target.value,
-              )
-            }
+            name="description"
+            value={localInvoiceLineItem.description}
+            onChange={handleLineItemChange}
           />
         ) : (
           invoiceLineItem.description
@@ -119,15 +150,10 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
       <TableCell>
         {isEditing ? (
           <Input
+            name="quantity"
             type="number"
-            value={localQuantity}
-            onChange={(e) =>
-              handleLineItemChange(
-                invoiceLineItem.id,
-                "quantity",
-                e.target.value,
-              )
-            }
+            value={localInvoiceLineItem.quantity}
+            onChange={handleLineItemChange}
           />
         ) : (
           invoiceLineItem.quantity
@@ -136,35 +162,29 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
       <TableCell>
         {isEditing ? (
           <Input
+            name="unitPrice"
             type="number"
             step="0.01"
-            value={localUnitPrice}
-            onChange={(e) =>
-              handleLineItemChange(
-                invoiceLineItem.id,
-                "unitPrice",
-                e.target.value,
-              )
-            }
+            value={localInvoiceLineItem.unitPrice}
+            onChange={handleLineItemChange}
           />
         ) : (
-          `$${localUnitPrice.toFixed(2)}`
+          `$${localInvoiceLineItem.unitPrice.toFixed(2)}`
         )}
       </TableCell>
       <TableCell>
         {isEditing ? (
           <Input
-            value={localGlCode ?? ""}
-            onChange={(e) =>
-              handleLineItemChange(invoiceLineItem.id, "glCode", e.target.value)
-            }
+            name="glCode"
+            value={localInvoiceLineItem.glCode ?? ""}
+            onChange={handleLineItemChange}
           />
         ) : (
           invoiceLineItem.glCode
         )}
       </TableCell>
       <TableCell className="text-right font-medium">
-        ${localAmount.toFixed(2)}
+        ${localInvoiceLineItem.unitPrice * localInvoiceLineItem.quantity}
       </TableCell>
       {isEditing && (
         <TableCell>

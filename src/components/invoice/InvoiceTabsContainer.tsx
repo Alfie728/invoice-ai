@@ -31,7 +31,9 @@ export function InvoiceTabsContainer({ invoiceId }: InvoiceTabsContainerProps) {
 function InvoiceContent({
   initialInvoice,
 }: {
-  initialInvoice: Invoice & { invoiceLineItem: InvoiceLineItem[] };
+  initialInvoice: Invoice & { subTotalAmount: number } & {
+    invoiceLineItem: InvoiceLineItem[];
+  };
 }) {
   const [isEditing, setIsEditing] = useState(false);
 

@@ -65,7 +65,6 @@ type ParsedInvoiceData = {
   invoiceDueDate: string | null;
   vendorName: string;
   taxAmount: number;
-  subTotalAmount: number;
   vendorCode: string | null;
   propertyCode: string | null;
   invoiceCurrency: string;
@@ -163,7 +162,6 @@ export async function processInvoice(
           : null,
         vendorName: parsedInvoiceData.vendorName,
         taxAmount: parsedInvoiceData.taxAmount,
-        subTotalAmount: parsedInvoiceData.subTotalAmount,
         vendorCode: parsedInvoiceData.vendorCode,
         propertyCode: parsedInvoiceData.propertyCode,
         invoiceCurrency: parsedInvoiceData.invoiceCurrency as InvoiceCurrency,

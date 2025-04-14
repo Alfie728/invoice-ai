@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useDebounce } from "@uidotdev/usehooks";
 interface InvoiceDetailsProps {
-  invoice: Invoice;
+  invoice: Invoice & { subTotalAmount: number };
   isEditing: boolean;
 }
 
@@ -180,9 +180,9 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="sub-total"
               name="subTotalAmount"
               type="number"
-              value={localInvoice.subTotalAmount.toString()}
+              value={invoice.subTotalAmount.toString()}
               onChange={handleInvoiceChange}
-              disabled={!isEditing}
+              disabled
             />
           </div>
 
