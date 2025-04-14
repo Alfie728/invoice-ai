@@ -20,6 +20,10 @@ export const invoiceRouter = createTRPCRouter({
         (acc, item) => acc + item.unitPrice * item.quantity,
         0,
       ),
+      totalAmount: invoice.invoiceLineItem.reduce(
+        (acc, item) => acc + item.unitPrice * item.quantity,
+        0,
+      ),
     }));
   }),
 
@@ -58,18 +62,18 @@ export const invoiceRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         data: z.object({
-          invoiceNumber: z.string(),
-          invoiceDate: z.date(),
-          invoiceDueDate: z.date().nullable(),
-          vendorName: z.string(),
-          taxAmount: z.number().nullable(),
-          invoiceStatus: z.nativeEnum(InvoiceStatus),
-          vendorCode: z.string().nullable(),
-          propertyCode: z.string().nullable(),
-          invoiceCurrency: z.nativeEnum(InvoiceCurrency),
-          apAccount: z.string().nullable(),
-          cashAccount: z.string().nullable(),
-          expenseType: z.string().nullable(),
+          invoiceStatus: z.nativeEnum(InvoiceStatus).optional(),
+          invoiceNumber: z.string().optional(),
+          invoiceDate: z.date().optional(),
+          invoiceDueDate: z.date().nullable().optional(),
+          vendorName: z.string().optional(),
+          taxAmount: z.number().nullable().optional(),
+          vendorCode: z.string().nullable().optional(),
+          propertyCode: z.string().nullable().optional(),
+          invoiceCurrency: z.nativeEnum(InvoiceCurrency).optional(),
+          apAccount: z.string().nullable().optional(),
+          cashAccount: z.string().nullable().optional(),
+          expenseType: z.string().nullable().optional(),
         }),
       }),
     )

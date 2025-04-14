@@ -5,7 +5,9 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Check, X } from "lucide-react";
-import type { Invoice } from "@prisma/client";
+import { InvoiceStatus, type Invoice } from "@prisma/client";
+import { api } from "@/trpc/react";
+import { toast } from "sonner";
 
 interface InvoiceHeaderProps {
   invoice: Invoice;
@@ -20,6 +22,49 @@ export function InvoiceHeader({
 }: InvoiceHeaderProps) {
   const isEditable = invoice.invoiceStatus === "PENDING";
 
+  const utils = api.useUtils();
+  const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation();
+
+  const handleApproveInvoice = () => {
+    updateInvoice(
+      {
+        id: invoice.id,
+        data: {
+          invoiceStatus: InvoiceStatus.APPROVED,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Invoice approved successfully");
+          void utils.invoice.getInvoiceById.invalidate();
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      },
+    );
+  };
+
+  const handleRejectInvoice = () => {
+    updateInvoice(
+      {
+        id: invoice.id,
+        data: {
+          invoiceStatus: InvoiceStatus.REJECTED,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Invoice rejected successfully");
+          void utils.invoice.getInvoiceById.invalidate();
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      },
+    );
+  };
+
   return (
     <div className="mb-6 flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -33,10 +78,10 @@ export function InvoiceHeader({
         <Badge
           variant={
             invoice.invoiceStatus === "APPROVED"
-              ? "default"
+              ? "approved"
               : invoice.invoiceStatus === "PENDING"
-                ? "outline"
-                : "destructive"
+                ? "pending"
+                : "rejected"
           }
         >
           {invoice.invoiceStatus}
@@ -60,8 +105,12 @@ export function InvoiceHeader({
         )}
         {invoice.invoiceStatus === "PENDING" && (
           <>
-            <Button variant="default">Approve</Button>
-            <Button variant="destructive">Reject</Button>
+            <Button variant="default" onClick={handleApproveInvoice}>
+              Approve
+            </Button>
+            <Button variant="destructive" onClick={handleRejectInvoice}>
+              Reject
+            </Button>
           </>
         )}
       </div>
