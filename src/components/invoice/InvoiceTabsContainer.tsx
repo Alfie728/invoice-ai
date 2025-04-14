@@ -31,7 +31,10 @@ export function InvoiceTabsContainer({ invoiceId }: InvoiceTabsContainerProps) {
 function InvoiceContent({
   initialInvoice,
 }: {
-  initialInvoice: Invoice & { subTotalAmount: number } & {
+  initialInvoice: Invoice & {
+    subTotalAmount: number;
+    totalAmount: number;
+  } & {
     invoiceLineItem: InvoiceLineItem[];
   };
 }) {

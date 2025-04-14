@@ -71,7 +71,7 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
   const [localInvoiceLineItem, setLocalInvoiceLineItem] =
     useState(invoiceLineItem);
 
-  const debouncedInvoiceLineItem = useDebounce(localInvoiceLineItem, 800);
+  const debouncedInvoiceLineItem = useDebounce(localInvoiceLineItem, 600);
 
   const utils = api.useUtils();
   const { mutate: updateInvoiceItem } =
@@ -165,11 +165,11 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
             name="unitPrice"
             type="number"
             step="0.01"
-            value={localInvoiceLineItem.unitPrice.toFixed(2)}
+            value={localInvoiceLineItem.unitPrice}
             onChange={handleLineItemChange}
           />
         ) : (
-          localInvoiceLineItem.unitPrice.toFixed(2)
+          localInvoiceLineItem.unitPrice
         )}
       </TableCell>
       <TableCell>
@@ -184,9 +184,7 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
         )}
       </TableCell>
       <TableCell className="text-right font-medium">
-        {(
-          localInvoiceLineItem.unitPrice * localInvoiceLineItem.quantity
-        ).toFixed(2)}
+        {localInvoiceLineItem.unitPrice * localInvoiceLineItem.quantity}
       </TableCell>
       {isEditing && (
         <TableCell>

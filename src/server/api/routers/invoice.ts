@@ -49,6 +49,7 @@ export const invoiceRouter = createTRPCRouter({
       return {
         ...invoice,
         subTotalAmount,
+        totalAmount: subTotalAmount + (invoice.taxAmount ?? 0),
       };
     }),
 

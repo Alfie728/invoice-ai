@@ -10,25 +10,51 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useDebounce } from "@uidotdev/usehooks";
 interface InvoiceDetailsProps {
-  invoice: Invoice & { subTotalAmount: number };
+  invoice: Invoice & { subTotalAmount: number; totalAmount: number };
   isEditing: boolean;
 }
 
 export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
   const [localInvoice, setLocalInvoice] = useState(invoice);
+
   const utils = api.useUtils();
   const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation({
+    onMutate: () => {
+      const previousInvoice = utils.invoice.getInvoiceById.getData({
+        id: invoice.id,
+      });
+      if (!previousInvoice) {
+        throw new Error("Previous invoice not found");
+      }
+
+      const updatedInvoice = {
+        ...previousInvoice,
+        ...localInvoice,
+        subTotalAmount: localInvoice.subTotalAmount,
+        totalAmount: invoice.totalAmount,
+      };
+
+      const newTotalAmount =
+        updatedInvoice.subTotalAmount + (updatedInvoice.taxAmount ?? 0);
+
+      utils.invoice.getInvoiceById.setData(
+        { id: invoice.id },
+        {
+          ...previousInvoice,
+          ...localInvoice,
+          subTotalAmount: localInvoice.subTotalAmount,
+          totalAmount: newTotalAmount,
+        },
+      );
+    },
     onSuccess: () => {
       toast.success("Invoice updated successfully");
-      void utils.invoice.getInvoiceById.invalidate();
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
-  const debouncedInvoice = useDebounce(localInvoice, 1000);
-
-  console.log(debouncedInvoice);
+  const debouncedInvoice = useDebounce(localInvoice, 600);
 
   const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
@@ -180,7 +206,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="sub-total"
               name="subTotalAmount"
               type="number"
-              value={invoice.subTotalAmount.toFixed(2)}
+              value={invoice.subTotalAmount}
               onChange={handleInvoiceChange}
               disabled
             />
@@ -192,7 +218,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="tax-amount"
               name="taxAmount"
               type="number"
-              value={localInvoice.taxAmount?.toFixed(2) ?? ""}
+              value={localInvoice.taxAmount ?? ""}
               onChange={handleInvoiceChange}
               disabled={!isEditing}
             />
@@ -204,9 +230,7 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               id="total-amount"
               name="totalAmount"
               type="number"
-              value={(
-                invoice.subTotalAmount + (invoice.taxAmount ?? 0)
-              ).toFixed(2)}
+              value={invoice.subTotalAmount + (invoice.taxAmount ?? 0)}
               disabled
               className="font-bold"
             />
