@@ -89,15 +89,20 @@ export function InvoiceHeader({
       </div>
       <div className="flex gap-2">
         {isEditable && !isEditing && (
-          <Button onClick={() => setIsEditing(true)}>Edit Invoice</Button>
+          <Button variant="edit" onClick={() => setIsEditing(true)}>
+            Edit Invoice
+          </Button>
         )}
         {isEditing && (
           <>
-            <Button variant="outline" onClick={() => setIsEditing(false)}>
+            <Button
+              variant="outline-reject"
+              onClick={() => setIsEditing(false)}
+            >
               <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
-            <Button onClick={() => setIsEditing(false)}>
+            <Button variant="edit" onClick={() => setIsEditing(false)}>
               <Check className="mr-2 h-4 w-4" />
               Save Changes
             </Button>
@@ -105,10 +110,10 @@ export function InvoiceHeader({
         )}
         {invoice.invoiceStatus === "PENDING" && (
           <>
-            <Button variant="default" onClick={handleApproveInvoice}>
+            <Button variant="approve" onClick={handleApproveInvoice}>
               Approve
             </Button>
-            <Button variant="destructive" onClick={handleRejectInvoice}>
+            <Button variant="reject" onClick={handleRejectInvoice}>
               Reject
             </Button>
           </>

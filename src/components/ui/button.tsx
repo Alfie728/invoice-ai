@@ -24,9 +24,12 @@ const buttonVariants = cva(
         approve: "bg-green-600 text-white hover:bg-green-700",
         edit: "bg-blue-600 text-white hover:bg-blue-700",
         reject: "bg-red-600 text-white hover:bg-red-700",
-        "outline-approve": "text-green-600 border-green-200 hover:bg-green-50",
-        "outline-edit": "text-blue-600 border-blue-200 hover:bg-blue-50",
-        "outline-reject": "text-red-600 border-red-200 hover:bg-red-50",
+        "outline-approve":
+          "text-green-600 border-green-200 bg-green-50 hover:bg-green-100",
+        "outline-edit":
+          "text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100",
+        "outline-reject":
+          "text-red-600 border-red-200 bg-red-50 hover:bg-red-100",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
