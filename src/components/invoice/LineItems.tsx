@@ -127,11 +127,13 @@ export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
   };
 
   useEffect(() => {
-    updateInvoiceItem({
-      invoiceId: invoiceLineItem.invoiceId,
-      id: invoiceLineItem.id,
-      data: debouncedInvoiceLineItem,
-    });
+    if (isEditing) {
+      updateInvoiceItem({
+        invoiceId: invoiceLineItem.invoiceId,
+        id: invoiceLineItem.id,
+        data: debouncedInvoiceLineItem,
+      });
+    }
   }, [debouncedInvoiceLineItem]);
 
   return (

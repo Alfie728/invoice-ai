@@ -70,12 +70,14 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
   };
 
   useEffect(() => {
-    updateInvoice({
-      id: invoice.id,
-      data: {
-        ...debouncedInvoice,
-      },
-    });
+    if (isEditing) {
+      updateInvoice({
+        id: invoice.id,
+        data: {
+          ...debouncedInvoice,
+        },
+      });
+    }
   }, [debouncedInvoice]);
 
   return (
