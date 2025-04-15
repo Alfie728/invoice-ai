@@ -23,7 +23,7 @@ interface InvoiceEmailProps {
 export default function InvoiceEmail({
   invoiceId,
   invoiceData,
-  baseUrl = "http://localhost:3000",
+  baseUrl = "https://invoice-ai-production.up.railway.app/dashboard",
 }: InvoiceEmailProps) {
   const {
     invoiceNumber,
@@ -116,7 +116,7 @@ export default function InvoiceEmail({
                     <Text style={label}>Due Date:</Text>
                   </Column>
                   <Column style={valueColumn}>
-                    <Text style={value}>{invoiceDueDate || "N/A"}</Text>
+                    <Text style={value}>{invoiceDueDate ?? "N/A"}</Text>
                   </Column>
                 </Row>
 
@@ -156,7 +156,7 @@ export default function InvoiceEmail({
                     <Text style={label}>Vendor Code:</Text>
                   </Column>
                   <Column style={valueColumn}>
-                    <Text style={value}>{vendorCode || "N/A"}</Text>
+                    <Text style={value}>{vendorCode ?? "N/A"}</Text>
                   </Column>
                 </Row>
 
@@ -165,7 +165,7 @@ export default function InvoiceEmail({
                     <Text style={label}>Property Code:</Text>
                   </Column>
                   <Column style={valueColumn}>
-                    <Text style={value}>{propertyCode || "N/A"}</Text>
+                    <Text style={value}>{propertyCode ?? "N/A"}</Text>
                   </Column>
                 </Row>
 
@@ -183,7 +183,7 @@ export default function InvoiceEmail({
                     <Text style={label}>AP Account:</Text>
                   </Column>
                   <Column style={valueColumn}>
-                    <Text style={value}>{apAccount || "N/A"}</Text>
+                    <Text style={value}>{apAccount ?? "N/A"}</Text>
                   </Column>
                 </Row>
 
@@ -192,7 +192,7 @@ export default function InvoiceEmail({
                     <Text style={label}>Cash Account:</Text>
                   </Column>
                   <Column style={valueColumn}>
-                    <Text style={value}>{cashAccount || "N/A"}</Text>
+                    <Text style={value}>{cashAccount ?? "N/A"}</Text>
                   </Column>
                 </Row>
 
@@ -201,7 +201,7 @@ export default function InvoiceEmail({
                     <Text style={label}>Expense Type:</Text>
                   </Column>
                   <Column style={valueColumn}>
-                    <Text style={value}>{expenseType || "N/A"}</Text>
+                    <Text style={value}>{expenseType ?? "N/A"}</Text>
                   </Column>
                 </Row>
               </Column>
@@ -235,7 +235,7 @@ export default function InvoiceEmail({
                 style={index % 2 === 0 ? tableRowEven : tableRowOdd}
               >
                 <Column style={tableCell}>
-                  <Text style={tableCellText}>{item.description || "N/A"}</Text>
+                  <Text style={tableCellText}>{item.description ?? "N/A"}</Text>
                 </Column>
                 <Column style={tableCellSmall}>
                   <Text style={tableCellText}>{item.quantity}</Text>
@@ -246,7 +246,7 @@ export default function InvoiceEmail({
                   </Text>
                 </Column>
                 <Column style={tableCellSmall}>
-                  <Text style={tableCellText}>{item.glCode || "N/A"}</Text>
+                  <Text style={tableCellText}>{item.glCode ?? "N/A"}</Text>
                 </Column>
                 <Column style={tableCellSmall}>
                   <Text style={tableCellText}>
@@ -277,7 +277,7 @@ export default function InvoiceEmail({
             <Row>
               <Column style={buttonColumn}>
                 <Button
-                  href={`${baseUrl}/dashboard/invoice/${invoiceId}`}
+                  href={`${baseUrl}/invoice/${invoiceId}`}
                   style={approveButton}
                 >
                   APPROVE INVOICE
@@ -286,7 +286,7 @@ export default function InvoiceEmail({
 
               <Column style={buttonColumn}>
                 <Button
-                  href={`${baseUrl}/dashboard/invoice/${invoiceId}`}
+                  href={`${baseUrl}/invoice/${invoiceId}`}
                   style={editButton}
                 >
                   EDIT INVOICE
@@ -295,7 +295,7 @@ export default function InvoiceEmail({
 
               <Column style={buttonColumn}>
                 <Button
-                  href={`${baseUrl}/dashboard/invoice/${invoiceId}/reject`}
+                  href={`${baseUrl}/invoice/${invoiceId}`}
                   style={rejectButton}
                 >
                   REJECT INVOICE

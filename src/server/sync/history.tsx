@@ -153,7 +153,7 @@ export async function processHistories(
         <InvoiceEmail
           invoiceId={emailMetadata.invoiceId}
           invoiceData={invoiceData}
-          baseUrl="http://localhost:3000"
+          baseUrl="https://invoice-ai-production.up.railway.app/dashboard"
         />,
       );
 
