@@ -1,5 +1,6 @@
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { InvoiceCurrency, InvoiceStatus } from "@prisma/client";
+import { InvoiceCurrency, InvoiceStatus, Prisma } from "@prisma/client";
+import type { Invoice, InvoiceLineItem } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -33,29 +34,111 @@ const updateInvoiceWithLineItemsInput = z.object({
   lineItems: z.array(lineItemSchema).optional(),
 });
 
-export const invoiceRouter = createTRPCRouter({
-  getAllInvoices: publicProcedure.query(async ({ ctx }) => {
-    const invoices = await ctx.db.invoice.findMany({
-      include: {
-        invoiceLineItem: true,
-      },
-    });
-    if (!invoices) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "No invoices found" });
-    }
+// Add this type to handle the raw query result
+type RawInvoiceWithTotal = Invoice & {
+  invoiceLineItem: InvoiceLineItem[];
+  total_amount: number;
+};
 
-    return invoices.map((invoice) => ({
-      ...invoice,
-      subTotalAmount: invoice.invoiceLineItem.reduce(
-        (acc, item) => acc + item.unitPrice * item.quantity,
-        0,
-      ),
-      totalAmount: invoice.invoiceLineItem.reduce(
-        (acc, item) => acc + item.unitPrice * item.quantity,
-        0,
-      ),
-    }));
-  }),
+export const invoiceRouter = createTRPCRouter({
+  getAllInvoices: publicProcedure
+    .input(
+      z.object({
+        senderEmail: z.string().optional(),
+        sortBy: z
+          .enum(["invoiceDate", "vendorName", "totalAmount", "invoiceStatus"])
+          .nullable(),
+        sortOrder: z.enum(["asc", "desc"]).nullable(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const {
+        senderEmail: userEmail,
+        sortBy = "invoiceDate",
+        sortOrder = "desc",
+      } = input;
+
+      if (sortBy === "totalAmount") {
+        const invoices = await ctx.db.$queryRaw<RawInvoiceWithTotal[]>`
+          SELECT 
+            i.*,
+            COALESCE(i."taxAmount", 0) + 
+            COALESCE(
+              (SELECT SUM(ili."unitPrice" * ili."quantity") 
+               FROM "InvoiceLineItem" ili 
+               WHERE ili."invoiceId" = i.id),
+              0
+            ) as total_amount,
+            COALESCE(
+              json_agg(
+                json_build_object(
+                  'id', il."id",
+                  'description', il."description",
+                  'quantity', il."quantity",
+                  'unitPrice', il."unitPrice",
+                  'glCode', il."glCode",
+                  'invoiceId', il."invoiceId",
+                  'createdAt', il."createdAt",
+                  'updatedAt', il."updatedAt"
+                )
+              ) FILTER (WHERE il."id" IS NOT NULL),
+              '[]'
+            ) as "invoiceLineItem"
+          FROM "Invoice" i
+          LEFT JOIN "InvoiceLineItem" il ON il."invoiceId" = i.id
+          ${
+            userEmail
+              ? Prisma.sql`WHERE i."invoiceSenderId" IN (
+            SELECT id FROM "InvoiceSender" 
+            WHERE "emailAddress" = ${userEmail}
+          )`
+              : Prisma.empty
+          }
+          GROUP BY i.id
+          ORDER BY total_amount ${sortOrder === "desc" ? Prisma.sql`DESC` : Prisma.sql`ASC`}
+        `;
+
+        return invoices.map((invoice) => ({
+          ...invoice,
+          subTotalAmount: invoice.invoiceLineItem.reduce(
+            (acc, item) => acc + item.unitPrice * item.quantity,
+            0,
+          ),
+          totalAmount: invoice.total_amount,
+        }));
+        
+      } else {
+        const invoices = await ctx.db.invoice.findMany({
+          where: {
+            ...(userEmail && { invoiceSender: { emailAddress: userEmail } }),
+          },
+          include: {
+            invoiceLineItem: true,
+          },
+          orderBy: {
+            [sortBy ?? "invoiceDate"]: sortOrder ?? "desc",
+          },
+        });
+        if (!invoices) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "No invoices found",
+          });
+        }
+
+        return invoices.map((invoice) => ({
+          ...invoice,
+          subTotalAmount: invoice.invoiceLineItem.reduce(
+            (acc, item) => acc + item.unitPrice * item.quantity,
+            0,
+          ),
+          totalAmount: invoice.invoiceLineItem.reduce(
+            (acc, item) => acc + item.unitPrice * item.quantity,
+            0,
+          ),
+        }));
+      }
+    }),
 
   getInvoiceById: publicProcedure
     .input(z.object({ id: z.string() }))

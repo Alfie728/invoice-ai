@@ -16,8 +16,16 @@ interface InvoiceTabContentProps {
     subTotalAmount: number;
     totalAmount: number;
   })[];
-  status?: InvoiceStatus;
+  status?: InvoiceStatus | null;
+  sortBy?:
+    | "invoiceDate"
+    | "vendorName"
+    | "totalAmount"
+    | "invoiceStatus"
+    | null;
+  sortOrder?: "asc" | "desc" | null;
   showSorting?: boolean;
+  onSortChange?: (sortBy: string, sortOrder: string) => void;
 }
 
 export function InvoiceTabContent({
@@ -25,7 +33,9 @@ export function InvoiceTabContent({
   description,
   invoices,
   status,
-  showSorting = false,
+  sortBy,
+  sortOrder,
+  onSortChange,
 }: InvoiceTabContentProps) {
   // Filter invoices by status if provided
   const filteredInvoices = status
@@ -39,7 +49,12 @@ export function InvoiceTabContent({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <InvoiceTable invoices={filteredInvoices} showSorting={showSorting} />
+        <InvoiceTable
+          invoices={filteredInvoices}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={onSortChange}
+        />
       </CardContent>
     </Card>
   );

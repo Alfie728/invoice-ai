@@ -19,7 +19,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Check, Edit, Eye, MoreHorizontal, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Check,
+  Edit,
+  Eye,
+  MoreHorizontal,
+  X,
+} from "lucide-react";
 import { InvoiceStatus, type Invoice } from "@prisma/client";
 import { toast } from "sonner";
 import { api } from "@/trpc/react";
@@ -29,15 +38,26 @@ interface InvoiceTableProps {
     subTotalAmount: number;
     totalAmount: number;
   })[];
-  showSorting?: boolean;
+  status?: InvoiceStatus | null;
+  sortBy?:
+    | "invoiceDate"
+    | "vendorName"
+    | "totalAmount"
+    | "invoiceStatus"
+    | null;
+  sortOrder?: "asc" | "desc" | null;
+  onSortChange?: (sortBy: string, sortOrder: string) => void;
 }
 
 export function InvoiceTable({
   invoices,
-  showSorting = false,
+  sortBy,
+  sortOrder,
+  onSortChange,
 }: InvoiceTableProps) {
   const router = useRouter();
-  const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation();
+  const { mutate: updateInvoice } =
+    api.invoice.updateInvoiceWithLineItems.useMutation();
   const utils = api.useUtils();
 
   const handleRowClick = (invoiceId: string, e: React.MouseEvent) => {
@@ -55,7 +75,7 @@ export function InvoiceTable({
     updateInvoice(
       {
         id: invoiceId,
-        data: {
+        invoiceDetails: {
           invoiceStatus: status,
         },
       },
@@ -78,46 +98,86 @@ export function InvoiceTable({
       <TableHeader>
         <TableRow>
           <TableHead className="w-[100px]">
-            {showSorting ? (
-              <Button variant="ghost" className="p-0 font-medium">
-                Invoice #
-                <ArrowUpDown className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              "Invoice #"
-            )}
+            <Button variant="ghost" className="p-0 font-medium">
+              Invoice #
+            </Button>
           </TableHead>
           <TableHead>
-            {showSorting ? (
-              <Button variant="ghost" className="p-0 font-medium">
-                Date
-                <ArrowUpDown className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              "Date"
-            )}
+            <Button
+              variant="ghost"
+              className="p-0 font-medium"
+              onClick={() => {
+                onSortChange?.(
+                  "invoiceDate",
+                  sortOrder === "asc" ? "desc" : "asc",
+                );
+              }}
+            >
+              Date
+              {sortBy === "invoiceDate" && sortOrder === "asc" ? (
+                <ArrowUp className="ml-2 h-4 w-4" />
+              ) : sortBy === "invoiceDate" && sortOrder === "desc" ? (
+                <ArrowDown className="ml-2 h-4 w-4" />
+              ) : null}
+            </Button>
           </TableHead>
           <TableHead>
-            {showSorting ? (
-              <Button variant="ghost" className="p-0 font-medium">
-                Vendor
-                <ArrowUpDown className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              "Vendor"
-            )}
+            <Button
+              variant="ghost"
+              className="p-0 font-medium"
+              onClick={() => {
+                onSortChange?.(
+                  "vendorName",
+                  sortOrder === "asc" ? "desc" : "asc",
+                );
+              }}
+            >
+              Vendor
+              {sortBy === "vendorName" && sortOrder === "asc" ? (
+                <ArrowUp className="ml-2 h-4 w-4" />
+              ) : sortBy === "vendorName" && sortOrder === "desc" ? (
+                <ArrowDown className="ml-2 h-4 w-4" />
+              ) : null}
+            </Button>
           </TableHead>
           <TableHead className="text-right">
-            {showSorting ? (
-              <Button variant="ghost" className="p-0 font-medium">
-                Amount
-                <ArrowUpDown className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              "Amount"
-            )}
+            <Button
+              variant="ghost"
+              className="p-0 font-medium"
+              onClick={() => {
+                onSortChange?.(
+                  "totalAmount",
+                  sortOrder === "asc" ? "desc" : "asc",
+                );
+              }}
+            >
+              Amount
+              {sortBy === "totalAmount" && sortOrder === "asc" ? (
+                <ArrowUp className="ml-2 h-4 w-4" />
+              ) : sortBy === "totalAmount" && sortOrder === "desc" ? (
+                <ArrowDown className="ml-2 h-4 w-4" />
+              ) : null}
+            </Button>
           </TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>
+            <Button
+              variant="ghost"
+              className="p-0 font-medium"
+              onClick={() => {
+                onSortChange?.(
+                  "invoiceStatus",
+                  sortOrder === "asc" ? "desc" : "asc",
+                );
+              }}
+            >
+              Status
+              {sortBy === "invoiceStatus" && sortOrder === "asc" ? (
+                <ArrowUp className="ml-2 h-4 w-4" />
+              ) : sortBy === "invoiceStatus" && sortOrder === "desc" ? (
+                <ArrowDown className="ml-2 h-4 w-4" />
+              ) : null}
+            </Button>
+          </TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>

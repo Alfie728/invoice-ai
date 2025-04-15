@@ -1,9 +1,6 @@
-"use client";
-
 import type React from "react";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   BarChart,
   FileText,
@@ -26,17 +23,17 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     title: "Invoices",
-    href: "/invoices",
+    href: "/dashboard",
     icon: FileText,
   },
   {
     title: "Vendors",
-    href: "/vendors",
+    href: "/dashboard",
     icon: Users,
   },
   {
     title: "Reports",
-    href: "/reports",
+    href: "/dashboard",
     icon: BarChart,
   },
   // {
@@ -94,11 +91,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               </span>
             </Link>
           </div>
-          <nav className="hidden items-center gap-6 md:flex">
+          {/* <nav className="hidden items-center gap-6 md:flex">
             {navItems.map((item) => (
-              <DesktopNavLink key={item.href} item={item} />
+              <DesktopNavLink key={item.title} item={item} />
             ))}
-          </nav>
+          </nav> */}
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
               Help
@@ -111,7 +108,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <aside className="bg-muted/40 hidden w-52 flex-col border-r md:flex">
           <nav className="flex-1 space-y-1 px-5 py-4">
             {navItems.map((item) => (
-              <SidebarNavLink key={item.href} item={item} />
+              <SidebarNavLink key={item.title} item={item} />
             ))}
           </nav>
         </aside>
@@ -122,8 +119,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 }
 
 function MobileNavLink({ item }: { item: NavItem }) {
-  const pathname = usePathname();
-  const isActive = pathname === item.href;
+  // const pathname = usePathname();
+  const isActive = false;
 
   return (
     <Link
@@ -142,8 +139,8 @@ function MobileNavLink({ item }: { item: NavItem }) {
 }
 
 function DesktopNavLink({ item }: { item: NavItem }) {
-  const pathname = usePathname();
-  const isActive = pathname === item.href;
+  // const pathname = usePathname();
+  const isActive = false;
 
   return (
     <Link
@@ -159,8 +156,8 @@ function DesktopNavLink({ item }: { item: NavItem }) {
 }
 
 function SidebarNavLink({ item }: { item: NavItem }) {
-  const pathname = usePathname();
-  const isActive = pathname === item.href;
+  // const pathname = usePathname();
+  const isActive = false;
 
   return (
     <Link

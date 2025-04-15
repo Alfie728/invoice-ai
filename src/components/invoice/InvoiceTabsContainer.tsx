@@ -114,6 +114,7 @@ function InvoiceContent({
       {
         id: initialInvoice.id,
         invoiceDetails: { invoiceStatus: InvoiceStatus.APPROVED },
+        lineItems: lineItems,
       },
       {
         onSuccess: () => {
@@ -135,6 +136,7 @@ function InvoiceContent({
       {
         id: initialInvoice.id,
         invoiceDetails: { invoiceStatus: InvoiceStatus.REJECTED },
+        lineItems: lineItems,
       },
       {
         onSuccess: () => {
