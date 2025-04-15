@@ -186,7 +186,7 @@ function InvoiceContent({
       <Tabs defaultValue="details" className="space-y-4">
         <TabsList>
           <TabsTrigger value="details">Invoice Details</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          {/* <TabsTrigger value="history">History</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="details" className="space-y-4">
@@ -207,9 +207,9 @@ function InvoiceContent({
           />
         </TabsContent>
 
-        <TabsContent value="history">
+        {/* <TabsContent value="history">
           <InvoiceHistory invoiceId={initialInvoice.id} />
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </>
   );

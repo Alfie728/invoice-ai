@@ -5,10 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Check, X } from "lucide-react";
-import { InvoiceStatus, type Invoice } from "@prisma/client";
-import { api } from "@/trpc/react";
-import { toast } from "sonner";
-
+import { type Invoice } from "@prisma/client";
 interface InvoiceHeaderProps {
   invoice: Invoice;
   isEditing: boolean;
