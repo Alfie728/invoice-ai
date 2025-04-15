@@ -75,6 +75,8 @@ function InvoiceContent({
       },
     });
 
+  const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation();
+
   const handleSaveChanges = () => {
     updateInvoiceWithLineItems({
       id: initialInvoice.id,
@@ -105,6 +107,48 @@ function InvoiceContent({
     setIsEditing(false);
   };
 
+  const handleApproveInvoice = () => {
+    setInvoiceDetails({
+      ...invoiceDetails,
+      invoiceStatus: InvoiceStatus.APPROVED,
+    });
+    updateInvoice(
+      {
+        id: initialInvoice.id,
+        data: { invoiceStatus: InvoiceStatus.APPROVED },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Invoice approved successfully");
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      },
+    );
+  };
+
+  const handleRejectInvoice = () => {
+    setInvoiceDetails({
+      ...invoiceDetails,
+      invoiceStatus: InvoiceStatus.REJECTED,
+    });
+    updateInvoice(
+      {
+        id: initialInvoice.id,
+        data: { invoiceStatus: InvoiceStatus.REJECTED },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Invoice rejected successfully");
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      },
+    );
+  };
+
   return (
     <>
       <InvoiceHeader
@@ -113,6 +157,8 @@ function InvoiceContent({
         setIsEditing={setIsEditing}
         onSave={handleSaveChanges}
         onCancel={handleCancelEdit}
+        onApprove={handleApproveInvoice}
+        onReject={handleRejectInvoice}
       />
 
       <Tabs defaultValue="details" className="space-y-4">

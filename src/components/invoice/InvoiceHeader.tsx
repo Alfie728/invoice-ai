@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ interface InvoiceHeaderProps {
   setIsEditing: (isEditing: boolean) => void;
   onSave: () => void;
   onCancel: () => void;
+  onApprove: () => void;
+  onReject: () => void;
 }
 
 export function InvoiceHeader({
@@ -23,51 +25,17 @@ export function InvoiceHeader({
   setIsEditing,
   onSave,
   onCancel,
+  onApprove,
+  onReject,
 }: InvoiceHeaderProps) {
-  const isEditable = invoice.invoiceStatus === "PENDING";
+  const [invoiceStatus, setInvoiceStatus] = useState(invoice.invoiceStatus);
+  const isEditable = invoiceStatus === "PENDING";
 
-  const utils = api.useUtils();
-  const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation();
-
-  const handleApproveInvoice = () => {
-    updateInvoice(
-      {
-        id: invoice.id,
-        data: {
-          invoiceStatus: InvoiceStatus.APPROVED,
-        },
-      },
-      {
-        onSuccess: () => {
-          toast.success("Invoice approved successfully");
-          void utils.invoice.getInvoiceById.invalidate({ id: invoice.id });
-        },
-        onError: (error) => {
-          toast.error(error.message);
-        },
-      },
-    );
-  };
-
-  const handleRejectInvoice = () => {
-    updateInvoice(
-      {
-        id: invoice.id,
-        data: {
-          invoiceStatus: InvoiceStatus.REJECTED,
-        },
-      },
-      {
-        onSuccess: () => {
-          toast.success("Invoice rejected successfully");
-          void utils.invoice.getInvoiceById.invalidate({ id: invoice.id });
-        },
-        onError: (error) => {
-          toast.error(error.message);
-        },
-      },
-    );
-  };
+  useEffect(() => {
+    if (!isEditing) {
+      setInvoiceStatus(invoice.invoiceStatus);
+    }
+  }, [invoice.invoiceStatus, isEditing]);
 
   return (
     <div className="mb-6 flex items-center justify-between">
@@ -111,10 +79,10 @@ export function InvoiceHeader({
         )}
         {invoice.invoiceStatus === "PENDING" && (
           <>
-            <Button variant="approve" onClick={handleApproveInvoice}>
+            <Button variant="approve" onClick={onApprove}>
               Approve
             </Button>
-            <Button variant="reject" onClick={handleRejectInvoice}>
+            <Button variant="reject" onClick={onReject}>
               Reject
             </Button>
           </>

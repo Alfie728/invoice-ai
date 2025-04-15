@@ -168,7 +168,7 @@ export function InvoiceDetails({
               id="sub-total"
               name="subTotalAmount"
               type="number"
-              value={invoice.subTotalAmount}
+              value={invoice.subTotalAmount.toFixed(2)}
               disabled
             />
           </div>
@@ -191,7 +191,9 @@ export function InvoiceDetails({
               id="total-amount"
               name="totalAmount"
               type="number"
-              value={invoice.subTotalAmount + (invoice.taxAmount ?? 0)}
+              value={`${(
+                invoice.subTotalAmount + (invoice.taxAmount ?? 0)
+              ).toFixed(2)}`}
               disabled
               className="font-bold"
             />

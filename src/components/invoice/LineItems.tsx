@@ -160,7 +160,9 @@ export function LineItem({
         )}
       </TableCell>
       <TableCell className="text-right font-medium">
-        {localInvoiceLineItem.unitPrice * localInvoiceLineItem.quantity}
+        {`${(
+          localInvoiceLineItem.unitPrice * localInvoiceLineItem.quantity
+        ).toFixed(2)}`}
       </TableCell>
       {isEditing && (
         <TableCell>
