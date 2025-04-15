@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InvoiceDetails } from "./InvoiceDetails";
 import { LineItems } from "./LineItems";
 import { InvoiceHistory } from "./InvoiceHistory";
 import { InvoiceHeader } from "./InvoiceHeader";
-import type { Invoice, InvoiceLineItem } from "@prisma/client";
+import {
+  InvoiceStatus,
+  type Invoice,
+  type InvoiceLineItem,
+} from "@prisma/client";
 import { api } from "@/trpc/react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface InvoiceTabsContainerProps {
   invoiceId: string;
@@ -39,13 +44,75 @@ function InvoiceContent({
   };
 }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [subTotalAmount, setSubTotalAmount] = useState(
+    initialInvoice.invoiceLineItem.reduce(
+      (acc, item) => acc + item.unitPrice * item.quantity,
+      0,
+    ),
+  );
+  const [lineItems, setLineItems] = useState(initialInvoice.invoiceLineItem);
+  const [invoiceDetails, setInvoiceDetails] = useState(initialInvoice);
+
+  const calculateSubTotal = useCallback((lineItems: InvoiceLineItem[]) => {
+    const newSubTotal = lineItems.reduce(
+      (acc, item) => acc + item.unitPrice * item.quantity,
+      0,
+    );
+    setSubTotalAmount(newSubTotal);
+    setLineItems(lineItems);
+  }, []);
+
+  const utils = api.useUtils();
+  const { mutate: updateInvoiceWithLineItems } =
+    api.invoice.updateInvoiceWithLineItems.useMutation({
+      onSuccess: () => {
+        toast.success("Invoice updated successfully");
+        void utils.invoice.getInvoiceById.invalidate();
+        setIsEditing(false);
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
+  const handleSaveChanges = () => {
+    updateInvoiceWithLineItems({
+      id: initialInvoice.id,
+      data: invoiceDetails,
+      lineItems: lineItems,
+    });
+  };
+
+  const handleInvoiceChange = (
+    updatedInvoice: Invoice & { subTotalAmount: number; totalAmount: number },
+  ) => {
+    setInvoiceDetails({
+      ...updatedInvoice,
+      invoiceLineItem: lineItems,
+    });
+  };
+
+  const handleCancelEdit = () => {
+    // Reset all local state to initial values
+    setInvoiceDetails(initialInvoice);
+    setLineItems(initialInvoice.invoiceLineItem);
+    setSubTotalAmount(
+      initialInvoice.invoiceLineItem.reduce(
+        (acc, item) => acc + item.unitPrice * item.quantity,
+        0,
+      ),
+    );
+    setIsEditing(false);
+  };
 
   return (
     <>
       <InvoiceHeader
-        invoice={initialInvoice}
+        invoice={invoiceDetails}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
+        onSave={handleSaveChanges}
+        onCancel={handleCancelEdit}
       />
 
       <Tabs defaultValue="details" className="space-y-4">
@@ -55,10 +122,18 @@ function InvoiceContent({
         </TabsList>
 
         <TabsContent value="details" className="space-y-4">
-          <InvoiceDetails invoice={initialInvoice} isEditing={isEditing} />
-          <LineItems
-            invoiceLineItems={initialInvoice.invoiceLineItem}
+          <InvoiceDetails
+            invoice={{
+              ...invoiceDetails,
+              subTotalAmount,
+            }}
             isEditing={isEditing}
+            onInvoiceChange={handleInvoiceChange}
+          />
+          <LineItems
+            invoiceLineItems={lineItems}
+            isEditing={isEditing}
+            onLineItemsChange={calculateSubTotal}
           />
         </TabsContent>
 

@@ -13,17 +13,22 @@ import {
 } from "@/components/ui/table";
 import type { InvoiceLineItem } from "@prisma/client";
 import { Trash } from "lucide-react";
-import { api } from "@/trpc/react";
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import { useDebounce } from "@uidotdev/usehooks";
 
 interface LineItemsProps {
   invoiceLineItems: InvoiceLineItem[];
   isEditing: boolean;
+  onLineItemsChange: (
+    lineItems: InvoiceLineItem[],
+    modifiedId?: string,
+  ) => void;
 }
 
-export function LineItems({ invoiceLineItems, isEditing }: LineItemsProps) {
+export function LineItems({
+  invoiceLineItems,
+  isEditing,
+  onLineItemsChange,
+}: LineItemsProps) {
   return (
     <Card>
       <CardHeader>
@@ -47,6 +52,8 @@ export function LineItems({ invoiceLineItems, isEditing }: LineItemsProps) {
                 key={item.id}
                 invoiceLineItem={item}
                 isEditing={isEditing}
+                onLineItemsChange={onLineItemsChange}
+                allLineItems={invoiceLineItems}
               />
             ))}
           </TableBody>
@@ -65,76 +72,43 @@ export function LineItems({ invoiceLineItems, isEditing }: LineItemsProps) {
 interface LineItemProps {
   invoiceLineItem: InvoiceLineItem;
   isEditing: boolean;
+  onLineItemsChange: (
+    lineItems: InvoiceLineItem[],
+    modifiedId?: string,
+  ) => void;
+  allLineItems: InvoiceLineItem[];
 }
 
-export function LineItem({ invoiceLineItem, isEditing }: LineItemProps) {
+export function LineItem({
+  invoiceLineItem,
+  isEditing,
+  onLineItemsChange,
+  allLineItems,
+}: LineItemProps) {
   const [localInvoiceLineItem, setLocalInvoiceLineItem] =
     useState(invoiceLineItem);
 
-  const debouncedInvoiceLineItem = useDebounce(localInvoiceLineItem, 600);
-
-  const utils = api.useUtils();
-  const { mutate: updateInvoiceItem } =
-    api.invoice.updateInvoiceItem.useMutation({
-      // Optimistic update the subtotal amount
-      onMutate: () => {
-        const previousInvoice = utils.invoice.getInvoiceById.getData({
-          id: invoiceLineItem.invoiceId,
-        });
-        if (!previousInvoice) {
-          throw new Error("Previous invoice not found");
-        }
-
-        // Create updated line items array
-        const updatedLineItems = previousInvoice.invoiceLineItem.map((item) =>
-          item.id === invoiceLineItem.id ? debouncedInvoiceLineItem : item,
-        );
-
-        // Calculate new subTotalAmount
-        const newSubTotalAmount = updatedLineItems.reduce(
-          (acc, item) => acc + item.unitPrice * item.quantity,
-          0,
-        );
-
-        // Update the cache
-        utils.invoice.getInvoiceById.setData(
-          { id: invoiceLineItem.invoiceId },
-          {
-            ...previousInvoice,
-            subTotalAmount: newSubTotalAmount,
-            invoiceLineItem: updatedLineItems,
-          },
-        );
-      },
-      onSuccess: () => {
-        toast.success("Invoice item updated successfully");
-        void utils.invoice.getInvoiceById.invalidate();
-      },
-      onError: (error) => {
-        toast.error(error.message);
-      },
-    });
-
   const handleLineItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    // console.log(name, value, type);
     const parsedValue =
       type === "number" ? (value === "" ? null : parseFloat(value)) : value;
-    setLocalInvoiceLineItem({
+    const updatedLineItem = {
       ...localInvoiceLineItem,
       [name]: parsedValue,
-    });
+    };
+    setLocalInvoiceLineItem(updatedLineItem);
+
+    const updatedLineItems = allLineItems.map((item) =>
+      item.id === invoiceLineItem.id ? updatedLineItem : item,
+    );
+    onLineItemsChange(updatedLineItems, invoiceLineItem.id);
   };
 
   useEffect(() => {
-    if (isEditing) {
-      updateInvoiceItem({
-        invoiceId: invoiceLineItem.invoiceId,
-        id: invoiceLineItem.id,
-        data: debouncedInvoiceLineItem,
-      });
+    if (!isEditing) {
+      setLocalInvoiceLineItem(invoiceLineItem);
     }
-  }, [debouncedInvoiceLineItem]);
+  }, [isEditing, invoiceLineItem]);
 
   return (
     <TableRow key={invoiceLineItem.id}>

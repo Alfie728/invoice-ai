@@ -12,13 +12,17 @@ import { toast } from "sonner";
 interface InvoiceHeaderProps {
   invoice: Invoice;
   isEditing: boolean;
-  setIsEditing: (value: boolean) => void;
+  setIsEditing: (isEditing: boolean) => void;
+  onSave: () => void;
+  onCancel: () => void;
 }
 
 export function InvoiceHeader({
   invoice,
   isEditing,
   setIsEditing,
+  onSave,
+  onCancel,
 }: InvoiceHeaderProps) {
   const isEditable = invoice.invoiceStatus === "PENDING";
 
@@ -36,7 +40,7 @@ export function InvoiceHeader({
       {
         onSuccess: () => {
           toast.success("Invoice approved successfully");
-          void utils.invoice.getInvoiceById.invalidate();
+          void utils.invoice.getInvoiceById.invalidate({ id: invoice.id });
         },
         onError: (error) => {
           toast.error(error.message);
@@ -56,7 +60,7 @@ export function InvoiceHeader({
       {
         onSuccess: () => {
           toast.success("Invoice rejected successfully");
-          void utils.invoice.getInvoiceById.invalidate();
+          void utils.invoice.getInvoiceById.invalidate({ id: invoice.id });
         },
         onError: (error) => {
           toast.error(error.message);
@@ -95,14 +99,11 @@ export function InvoiceHeader({
         )}
         {isEditing && (
           <>
-            <Button
-              variant="outline-reject"
-              onClick={() => setIsEditing(false)}
-            >
+            <Button variant="outline-reject" onClick={onCancel}>
               <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
-            <Button variant="edit" onClick={() => setIsEditing(false)}>
+            <Button onClick={onSave} variant="outline-edit">
               <Check className="mr-2 h-4 w-4" />
               Save Changes
             </Button>

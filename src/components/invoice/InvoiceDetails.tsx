@@ -4,81 +4,41 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { api } from "@/trpc/react";
 import type { Invoice } from "@prisma/client";
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import { useDebounce } from "@uidotdev/usehooks";
+
 interface InvoiceDetailsProps {
   invoice: Invoice & { subTotalAmount: number; totalAmount: number };
   isEditing: boolean;
+  onInvoiceChange: (
+    invoice: Invoice & { subTotalAmount: number; totalAmount: number },
+  ) => void;
 }
 
-export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
+export function InvoiceDetails({
+  invoice,
+  isEditing,
+  onInvoiceChange,
+}: InvoiceDetailsProps) {
   const [localInvoice, setLocalInvoice] = useState(invoice);
-
-  const utils = api.useUtils();
-  const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation({
-    onMutate: () => {
-      const previousInvoice = utils.invoice.getInvoiceById.getData({
-        id: invoice.id,
-      });
-      if (!previousInvoice) {
-        throw new Error("Previous invoice not found");
-      }
-
-      const updatedInvoice = {
-        ...previousInvoice,
-        ...localInvoice,
-        subTotalAmount: localInvoice.subTotalAmount,
-        totalAmount: invoice.totalAmount,
-      };
-
-      const newTotalAmount =
-        updatedInvoice.subTotalAmount + (updatedInvoice.taxAmount ?? 0);
-
-      utils.invoice.getInvoiceById.setData(
-        { id: invoice.id },
-        {
-          ...previousInvoice,
-          ...localInvoice,
-          subTotalAmount: localInvoice.subTotalAmount,
-          totalAmount: newTotalAmount,
-        },
-      );
-    },
-    onSuccess: () => {
-      toast.success("Invoice updated successfully");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-  const debouncedInvoice = useDebounce(localInvoice, 600);
 
   const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-
-    // Convert string values to numbers for numeric fields
     const parsedValue =
       type === "number" ? (value === "" ? null : parseFloat(value)) : value;
-
-    setLocalInvoice({
+    const updatedInvoice = {
       ...localInvoice,
       [name]: parsedValue,
-    });
+    };
+    setLocalInvoice(updatedInvoice);
+    onInvoiceChange(updatedInvoice);
   };
 
   useEffect(() => {
-    if (isEditing) {
-      updateInvoice({
-        id: invoice.id,
-        data: {
-          ...debouncedInvoice,
-        },
-      });
+    if (!isEditing) {
+      setLocalInvoice(invoice);
     }
-  }, [debouncedInvoice]);
+  }, [isEditing, invoice]);
 
   return (
     <Card>
@@ -209,7 +169,6 @@ export function InvoiceDetails({ invoice, isEditing }: InvoiceDetailsProps) {
               name="subTotalAmount"
               type="number"
               value={invoice.subTotalAmount}
-              onChange={handleInvoiceChange}
               disabled
             />
           </div>
