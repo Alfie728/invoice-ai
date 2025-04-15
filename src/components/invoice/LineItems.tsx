@@ -140,7 +140,7 @@ export function LineItem({
           <Input
             name="unitPrice"
             type="number"
-            step="0.01"
+            step="0.1"
             value={localInvoiceLineItem.unitPrice}
             onChange={handleLineItemChange}
           />

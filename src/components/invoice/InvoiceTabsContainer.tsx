@@ -75,8 +75,6 @@ function InvoiceContent({
       },
     });
 
-  const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation();
-
   const handleSaveChanges = () => {
     updateInvoiceWithLineItems({
       id: initialInvoice.id,
@@ -112,7 +110,7 @@ function InvoiceContent({
       ...invoiceDetails,
       invoiceStatus: InvoiceStatus.APPROVED,
     });
-    updateInvoice(
+    updateInvoiceWithLineItems(
       {
         id: initialInvoice.id,
         data: { invoiceStatus: InvoiceStatus.APPROVED },
@@ -133,7 +131,7 @@ function InvoiceContent({
       ...invoiceDetails,
       invoiceStatus: InvoiceStatus.REJECTED,
     });
-    updateInvoice(
+    updateInvoiceWithLineItems(
       {
         id: initialInvoice.id,
         data: { invoiceStatus: InvoiceStatus.REJECTED },

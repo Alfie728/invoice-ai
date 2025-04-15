@@ -57,62 +57,6 @@ export const invoiceRouter = createTRPCRouter({
       };
     }),
 
-  updateInvoice: publicProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        data: z.object({
-          invoiceStatus: z.nativeEnum(InvoiceStatus).optional(),
-          invoiceNumber: z.string().optional(),
-          invoiceDate: z.date().optional(),
-          invoiceDueDate: z.date().nullable().optional(),
-          vendorName: z.string().optional(),
-          taxAmount: z.number().nullable().optional(),
-          vendorCode: z.string().nullable().optional(),
-          propertyCode: z.string().nullable().optional(),
-          invoiceCurrency: z.nativeEnum(InvoiceCurrency).optional(),
-          apAccount: z.string().nullable().optional(),
-          cashAccount: z.string().nullable().optional(),
-          expenseType: z.string().nullable().optional(),
-        }),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const { id, data } = input;
-
-      console.log(data);
-
-      // Update the invoice with proper nested update format
-      const updatedInvoice = await ctx.db.invoice.update({
-        where: { id },
-        data,
-      });
-
-      return updatedInvoice;
-    }),
-
-  updateInvoiceItem: publicProcedure
-    .input(
-      z.object({
-        invoiceId: z.string(),
-        id: z.string(),
-        data: z.object({
-          description: z.string(),
-          quantity: z.number(),
-          unitPrice: z.number(),
-          glCode: z.string().nullable(),
-        }),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const { invoiceId, id, data } = input;
-      const updatedInvoiceItem = await ctx.db.invoiceLineItem.update({
-        where: { invoiceId, id },
-        data,
-      });
-      return updatedInvoiceItem;
-    }),
-
   updateInvoiceWithLineItems: publicProcedure
     .input(
       z.object({
@@ -131,15 +75,17 @@ export const invoiceRouter = createTRPCRouter({
           cashAccount: z.string().nullable().optional(),
           expenseType: z.string().nullable().optional(),
         }),
-        lineItems: z.array(
-          z.object({
-            id: z.string(),
-            description: z.string(),
-            quantity: z.number(),
-            unitPrice: z.number(),
-            glCode: z.string().nullable(),
-          }),
-        ),
+        lineItems: z
+          .array(
+            z.object({
+              id: z.string(),
+              description: z.string(),
+              quantity: z.number(),
+              unitPrice: z.number(),
+              glCode: z.string().nullable(),
+            }),
+          )
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -148,14 +94,72 @@ export const invoiceRouter = createTRPCRouter({
           where: { id: input.id },
           data: input.data,
         }),
-        ...input.lineItems.map((item) =>
-          ctx.db.invoiceLineItem.update({
-            where: { id: item.id },
-            data: item,
-          }),
-        ),
+        ...(input.lineItems
+          ? input.lineItems.map((item) =>
+              ctx.db.invoiceLineItem.update({
+                where: { id: item.id },
+                data: item,
+              }),
+            )
+          : []),
       ]);
 
       return invoice;
     }),
+
+  // updateInvoice: publicProcedure
+  //   .input(
+  //     z.object({
+  //       id: z.string(),
+  //       data: z.object({
+  //         invoiceStatus: z.nativeEnum(InvoiceStatus).optional(),
+  //         invoiceNumber: z.string().optional(),
+  //         invoiceDate: z.date().optional(),
+  //         invoiceDueDate: z.date().nullable().optional(),
+  //         vendorName: z.string().optional(),
+  //         taxAmount: z.number().nullable().optional(),
+  //         vendorCode: z.string().nullable().optional(),
+  //         propertyCode: z.string().nullable().optional(),
+  //         invoiceCurrency: z.nativeEnum(InvoiceCurrency).optional(),
+  //         apAccount: z.string().nullable().optional(),
+  //         cashAccount: z.string().nullable().optional(),
+  //         expenseType: z.string().nullable().optional(),
+  //       }),
+  //     }),
+  //   )
+  //   .mutation(async ({ ctx, input }) => {
+  //     const { id, data } = input;
+
+  //     console.log(data);
+
+  //     // Update the invoice with proper nested update format
+  //     const updatedInvoice = await ctx.db.invoice.update({
+  //       where: { id },
+  //       data,
+  //     });
+
+  //     return updatedInvoice;
+  //   }),
+
+  // updateInvoiceItem: publicProcedure
+  //   .input(
+  //     z.object({
+  //       invoiceId: z.string(),
+  //       id: z.string(),
+  //       data: z.object({
+  //         description: z.string(),
+  //         quantity: z.number(),
+  //         unitPrice: z.number(),
+  //         glCode: z.string().nullable(),
+  //       }),
+  //     }),
+  //   )
+  //   .mutation(async ({ ctx, input }) => {
+  //     const { invoiceId, id, data } = input;
+  //     const updatedInvoiceItem = await ctx.db.invoiceLineItem.update({
+  //       where: { invoiceId, id },
+  //       data,
+  //     });
+  //     return updatedInvoiceItem;
+  //   }),
 });
