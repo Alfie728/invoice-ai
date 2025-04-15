@@ -23,12 +23,16 @@ interface LineItemsProps {
     lineItems: InvoiceLineItem[],
     modifiedId?: string,
   ) => void;
+  onAddLineItem: () => void;
+  onDeleteLineItem: (id: string) => void;
 }
 
 export function LineItems({
   invoiceLineItems,
   isEditing,
   onLineItemsChange,
+  onAddLineItem,
+  onDeleteLineItem,
 }: LineItemsProps) {
   return (
     <Card>
@@ -56,20 +60,21 @@ export function LineItems({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoiceLineItems.map((item) => (
+            {invoiceLineItems.map((item, index) => (
               <LineItem
-                key={item.id}
+                key={item.id ?? `new-${index}`}
                 invoiceLineItem={item}
                 isEditing={isEditing}
                 onLineItemsChange={onLineItemsChange}
                 allLineItems={invoiceLineItems}
+                onDeleteLineItem={onDeleteLineItem}
               />
             ))}
           </TableBody>
         </Table>
 
         {isEditing && (
-          <Button variant="outline" className="mt-4">
+          <Button variant="outline" className="mt-4" onClick={onAddLineItem}>
             Add Line Item
           </Button>
         )}
@@ -85,6 +90,7 @@ interface LineItemProps {
     lineItems: InvoiceLineItem[],
     modifiedId?: string,
   ) => void;
+  onDeleteLineItem: (id: string) => void;
   allLineItems: InvoiceLineItem[];
 }
 
@@ -93,6 +99,7 @@ export function LineItem({
   isEditing,
   onLineItemsChange,
   allLineItems,
+  onDeleteLineItem,
 }: LineItemProps) {
   const [localInvoiceLineItem, setLocalInvoiceLineItem] =
     useState(invoiceLineItem);
@@ -167,7 +174,12 @@ export function LineItem({
       </TableCell>
       <TableCell className="w-[5%]">
         {isEditing && (
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onDeleteLineItem(invoiceLineItem.id)}
+          >
             <Trash className="h-4 w-4" />
             <span className="sr-only">Delete</span>
           </Button>

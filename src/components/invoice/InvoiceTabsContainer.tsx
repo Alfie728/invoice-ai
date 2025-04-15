@@ -78,7 +78,7 @@ function InvoiceContent({
   const handleSaveChanges = () => {
     updateInvoiceWithLineItems({
       id: initialInvoice.id,
-      data: invoiceDetails,
+      invoiceDetails: invoiceDetails,
       lineItems: lineItems,
     });
   };
@@ -113,7 +113,7 @@ function InvoiceContent({
     updateInvoiceWithLineItems(
       {
         id: initialInvoice.id,
-        data: { invoiceStatus: InvoiceStatus.APPROVED },
+        invoiceDetails: { invoiceStatus: InvoiceStatus.APPROVED },
       },
       {
         onSuccess: () => {
@@ -134,7 +134,7 @@ function InvoiceContent({
     updateInvoiceWithLineItems(
       {
         id: initialInvoice.id,
-        data: { invoiceStatus: InvoiceStatus.REJECTED },
+        invoiceDetails: { invoiceStatus: InvoiceStatus.REJECTED },
       },
       {
         onSuccess: () => {
@@ -144,6 +144,30 @@ function InvoiceContent({
           toast.error(error.message);
         },
       },
+    );
+  };
+
+  const handleAddLineItem = () => {
+    setLineItems([
+      ...lineItems,
+      {
+        description: "",
+        quantity: 0,
+        unitPrice: 0,
+        glCode: null,
+        invoiceId: initialInvoice.id,
+      } as InvoiceLineItem,
+    ]);
+
+    setSubTotalAmount(
+      lineItems.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0),
+    );
+  };
+
+  const handleDeleteLineItem = (id: string) => {
+    setLineItems(lineItems.filter((item) => item.id !== id));
+    setSubTotalAmount(
+      lineItems.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0),
     );
   };
 
@@ -178,6 +202,8 @@ function InvoiceContent({
             invoiceLineItems={lineItems}
             isEditing={isEditing}
             onLineItemsChange={calculateSubTotal}
+            onAddLineItem={handleAddLineItem}
+            onDeleteLineItem={handleDeleteLineItem}
           />
         </TabsContent>
 
