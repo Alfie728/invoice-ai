@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import type { InvoiceLineItem } from "@prisma/client";
 import { Trash } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -38,12 +39,20 @@ export function LineItems({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Description</TableHead>
-              <TableHead className="w-[100px]">Quantity</TableHead>
-              <TableHead className="w-[150px]">Unit Price</TableHead>
-              <TableHead className="w-[120px]">GL Code</TableHead>
-              <TableHead className="w-[150px] text-right">Total</TableHead>
-              {isEditing && <TableHead className="w-[80px]">Actions</TableHead>}
+              <TableHead className={cn("w-[35%] text-left")}>
+                Description
+              </TableHead>
+              <TableHead className={cn("w-[15%] text-left")}>
+                Quantity
+              </TableHead>
+              <TableHead className={cn("w-[15%] text-left")}>
+                Unit Price
+              </TableHead>
+              <TableHead className={cn("w-[15%] text-left")}>GL Code</TableHead>
+              <TableHead className={cn("w-[15%] text-left")}>Total</TableHead>
+              <TableHead className={cn("w-[5%] text-left")}>
+                {isEditing ? "Actions" : ""}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -112,66 +121,58 @@ export function LineItem({
 
   return (
     <TableRow key={invoiceLineItem.id}>
-      <TableCell>
-        {isEditing ? (
-          <Input
-            name="description"
-            value={localInvoiceLineItem.description}
-            onChange={handleLineItemChange}
-          />
-        ) : (
-          invoiceLineItem.description
-        )}
+      <TableCell className="w-[35%]">
+        <Input
+          name="description"
+          value={localInvoiceLineItem.description}
+          onChange={handleLineItemChange}
+          disabled={!isEditing}
+        />
       </TableCell>
-      <TableCell>
-        {isEditing ? (
-          <Input
-            name="quantity"
-            type="number"
-            value={localInvoiceLineItem.quantity}
-            onChange={handleLineItemChange}
-          />
-        ) : (
-          invoiceLineItem.quantity
-        )}
+      <TableCell className="w-[15%]">
+        <Input
+          name="quantity"
+          type="number"
+          value={localInvoiceLineItem.quantity}
+          onChange={handleLineItemChange}
+          disabled={!isEditing}
+        />
       </TableCell>
-      <TableCell>
-        {isEditing ? (
-          <Input
-            name="unitPrice"
-            type="number"
-            step="0.1"
-            value={localInvoiceLineItem.unitPrice}
-            onChange={handleLineItemChange}
-          />
-        ) : (
-          localInvoiceLineItem.unitPrice
-        )}
+      <TableCell className="w-[15%]">
+        <Input
+          name="unitPrice"
+          type="number"
+          step="0.1"
+          value={localInvoiceLineItem.unitPrice}
+          onChange={handleLineItemChange}
+          disabled={!isEditing}
+        />
       </TableCell>
-      <TableCell>
-        {isEditing ? (
-          <Input
-            name="glCode"
-            value={localInvoiceLineItem.glCode ?? ""}
-            onChange={handleLineItemChange}
-          />
-        ) : (
-          invoiceLineItem.glCode
-        )}
+      <TableCell className="w-[15%]">
+        <Input
+          name="glCode"
+          value={localInvoiceLineItem.glCode ?? ""}
+          onChange={handleLineItemChange}
+          disabled={!isEditing}
+        />
       </TableCell>
-      <TableCell className="text-right font-medium">
-        {`${(
-          localInvoiceLineItem.unitPrice * localInvoiceLineItem.quantity
-        ).toFixed(2)}`}
+      <TableCell className="w-[15%] text-left font-medium">
+        <Input
+          name="total"
+          value={`${(
+            localInvoiceLineItem.unitPrice * localInvoiceLineItem.quantity
+          ).toFixed(2)}`}
+          disabled
+        />
       </TableCell>
-      {isEditing && (
-        <TableCell>
+      <TableCell className="w-[5%]">
+        {isEditing && (
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <Trash className="h-4 w-4" />
             <span className="sr-only">Delete</span>
           </Button>
-        </TableCell>
-      )}
+        )}
+      </TableCell>
     </TableRow>
   );
 }
