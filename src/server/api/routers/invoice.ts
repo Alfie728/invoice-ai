@@ -98,14 +98,31 @@ export const invoiceRouter = createTRPCRouter({
           ORDER BY total_amount ${sortOrder === "desc" ? Prisma.sql`DESC` : Prisma.sql`ASC`}
         `;
 
-        return invoices.map((invoice) => ({
-          ...invoice,
-          subTotalAmount: invoice.invoiceLineItem.reduce(
+        return invoices.map((invoice) => {
+          const subTotalAmount = invoice.invoiceLineItem.reduce(
             (acc, item) => acc + item.unitPrice * item.quantity,
             0,
-          ),
-          totalAmount: invoice.total_amount,
-        }));
+          );
+
+          // Calculate additional charges total
+          const additionalChargesTotal = invoice.additionalCharges
+            ? (
+                invoice.additionalCharges as Array<{
+                  chargeName: string;
+                  amount: number;
+                }>
+              ).reduce((acc, charge) => acc + charge.amount, 0)
+            : 0;
+
+          return {
+            ...invoice,
+            subTotalAmount,
+            totalAmount:
+              subTotalAmount +
+              (invoice.taxAmount ?? 0) +
+              additionalChargesTotal,
+          };
+        });
       } else {
         const invoices = await ctx.db.invoice.findMany({
           where: {
@@ -125,17 +142,31 @@ export const invoiceRouter = createTRPCRouter({
           });
         }
 
-        return invoices.map((invoice) => ({
-          ...invoice,
-          subTotalAmount: invoice.invoiceLineItem.reduce(
+        return invoices.map((invoice) => {
+          const subTotalAmount = invoice.invoiceLineItem.reduce(
             (acc, item) => acc + item.unitPrice * item.quantity,
             0,
-          ),
-          totalAmount: invoice.invoiceLineItem.reduce(
-            (acc, item) => acc + item.unitPrice * item.quantity,
-            0,
-          ),
-        }));
+          );
+
+          // Calculate additional charges total
+          const additionalChargesTotal = invoice.additionalCharges
+            ? (
+                invoice.additionalCharges as Array<{
+                  chargeName: string;
+                  amount: number;
+                }>
+              ).reduce((acc, charge) => acc + charge.amount, 0)
+            : 0;
+
+          return {
+            ...invoice,
+            subTotalAmount,
+            totalAmount:
+              subTotalAmount +
+              (invoice.taxAmount ?? 0) +
+              additionalChargesTotal,
+          };
+        });
       }
     }),
 
@@ -162,10 +193,21 @@ export const invoiceRouter = createTRPCRouter({
         0,
       );
 
+      // Calculate additional charges total
+      const additionalChargesTotal = invoice.additionalCharges
+        ? (
+            invoice.additionalCharges as Array<{
+              chargeName: string;
+              amount: number;
+            }>
+          ).reduce((acc, charge) => acc + charge.amount, 0)
+        : 0;
+
       return {
         ...invoice,
         subTotalAmount,
-        totalAmount: subTotalAmount + (invoice.taxAmount ?? 0),
+        totalAmount:
+          subTotalAmount + (invoice.taxAmount ?? 0) + additionalChargesTotal,
       };
     }),
 

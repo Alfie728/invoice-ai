@@ -126,20 +126,7 @@ export async function processInvoice(
   const result = JSON.parse(
     workflowRunResponse.data.outputs.text,
   ) as ParsedInvoiceData;
-
-  console.log(
-    "Raw invoiceDueDate:",
-    result.invoiceDueDate,
-    typeof result.invoiceDueDate,
-  );
-  console.log("Raw vendorCode:", result.vendorCode, typeof result.vendorCode);
-
-  console.log(
-    "Raw additionalCharges:",
-    result.additionalCharges,
-    typeof result.additionalCharges,
-  );
-
+  
   const invoice = await db.$transaction(async (tx) => {
     await tx.invoiceSender.upsert({
       where: {
