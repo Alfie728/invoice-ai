@@ -56,9 +56,28 @@ export function InvoiceTable({
   onSortChange,
 }: InvoiceTableProps) {
   const router = useRouter();
-  const { mutate: updateInvoice } =
-    api.invoice.updateInvoiceWithLineItems.useMutation();
   const utils = api.useUtils();
+  const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation({
+    onMutate: (invoice) => {
+      console.log(sortBy, sortOrder);
+      // Update the invoice in any lists that might be displayed
+      utils.invoice.getAllInvoices.setData(
+        { sortBy: sortBy ?? null, sortOrder: sortOrder ?? null },
+        (oldInvoices) => {
+          if (!oldInvoices) return oldInvoices;
+          return oldInvoices.map((inv) =>
+            inv.id === invoice.id
+              ? {
+                  ...inv,
+                  invoiceStatus:
+                    invoice.data.invoiceStatus ?? inv.invoiceStatus,
+                }
+              : inv,
+          );
+        },
+      );
+    },
+  });
 
   const handleRowClick = (invoiceId: string, e: React.MouseEvent) => {
     // Prevent navigation if clicking on or inside the dropdown menu
@@ -75,7 +94,7 @@ export function InvoiceTable({
     updateInvoice(
       {
         id: invoiceId,
-        invoiceDetails: {
+        data: {
           invoiceStatus: status,
         },
       },
@@ -84,7 +103,6 @@ export function InvoiceTable({
           toast.success(
             `Invoice ${status === InvoiceStatus.APPROVED ? "approved" : "rejected"} successfully`,
           );
-          void utils.invoice.getAllInvoices.invalidate();
         },
         onError: (error) => {
           toast.error(error.message);
@@ -260,7 +278,7 @@ function InvoiceActions({ invoice, onStatusUpdate }: InvoiceActionsProps) {
           <>
             <DropdownMenuItem
               onClick={() => {
-                router.push(`/dashboard/invoice/${invoice.id}/edit`);
+                router.push(`/dashboard/invoice/${invoice.id}`);
               }}
             >
               <Edit className="mr-2 h-4 w-4" />

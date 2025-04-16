@@ -158,7 +158,9 @@ export async function processInvoice(
     return tx.invoice.create({
       data: {
         invoiceNumber: parsedInvoiceData.invoiceNumber,
-        invoiceDate: new Date(parsedInvoiceData.invoiceDate),
+        invoiceDate: parsedInvoiceData.invoiceDate
+          ? new Date(parsedInvoiceData.invoiceDate)
+          : "",
         invoiceDueDate: parsedInvoiceData.invoiceDueDate
           ? new Date(parsedInvoiceData.invoiceDueDate)
           : null,

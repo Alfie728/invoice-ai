@@ -106,7 +106,6 @@ export const invoiceRouter = createTRPCRouter({
           ),
           totalAmount: invoice.total_amount,
         }));
-        
       } else {
         const invoices = await ctx.db.invoice.findMany({
           where: {
@@ -212,39 +211,39 @@ export const invoiceRouter = createTRPCRouter({
       return invoice;
     }),
 
-  // updateInvoice: publicProcedure
-  //   .input(
-  //     z.object({
-  //       id: z.string(),
-  //       data: z.object({
-  //         invoiceStatus: z.nativeEnum(InvoiceStatus).optional(),
-  //         invoiceNumber: z.string().optional(),
-  //         invoiceDate: z.date().optional(),
-  //         invoiceDueDate: z.date().nullable().optional(),
-  //         vendorName: z.string().optional(),
-  //         taxAmount: z.number().nullable().optional(),
-  //         vendorCode: z.string().nullable().optional(),
-  //         propertyCode: z.string().nullable().optional(),
-  //         invoiceCurrency: z.nativeEnum(InvoiceCurrency).optional(),
-  //         apAccount: z.string().nullable().optional(),
-  //         cashAccount: z.string().nullable().optional(),
-  //         expenseType: z.string().nullable().optional(),
-  //       }),
-  //     }),
-  //   )
-  //   .mutation(async ({ ctx, input }) => {
-  //     const { id, data } = input;
+  updateInvoice: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        data: z.object({
+          invoiceStatus: z.nativeEnum(InvoiceStatus).optional(),
+          invoiceNumber: z.string().optional(),
+          invoiceDate: z.date().optional(),
+          invoiceDueDate: z.date().nullable().optional(),
+          vendorName: z.string().optional(),
+          taxAmount: z.number().nullable().optional(),
+          vendorCode: z.string().nullable().optional(),
+          propertyCode: z.string().nullable().optional(),
+          invoiceCurrency: z.nativeEnum(InvoiceCurrency).optional(),
+          apAccount: z.string().nullable().optional(),
+          cashAccount: z.string().nullable().optional(),
+          expenseType: z.string().nullable().optional(),
+        }),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, data } = input;
 
-  //     console.log(data);
+      console.log(data);
 
-  //     // Update the invoice with proper nested update format
-  //     const updatedInvoice = await ctx.db.invoice.update({
-  //       where: { id },
-  //       data,
-  //     });
+      // Update the invoice with proper nested update format
+      const updatedInvoice = await ctx.db.invoice.update({
+        where: { id },
+        data,
+      });
 
-  //     return updatedInvoice;
-  //   }),
+      return updatedInvoice;
+    }),
 
   // updateInvoiceItem: publicProcedure
   //   .input(
