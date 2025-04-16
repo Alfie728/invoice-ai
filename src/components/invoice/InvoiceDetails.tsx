@@ -254,7 +254,7 @@ export function InvoiceDetails({
 
         <Separator className="my-6" />
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="sub-total">Sub Total</Label>
             <Input
@@ -291,22 +291,6 @@ export function InvoiceDetails({
               />
             </div>
           )}
-
-          <div className="space-y-2">
-            <Label htmlFor="total-amount">Total Amount</Label>
-            <Input
-              id="total-amount"
-              name="totalAmount"
-              type="number"
-              value={`${(
-                invoice.subTotalAmount +
-                (invoice.taxAmount ?? 0) +
-                additionalChargesTotal
-              ).toFixed(2)}`}
-              disabled
-              className="font-bold"
-            />
-          </div>
         </div>
         <Separator className="my-6" />
 
@@ -314,7 +298,9 @@ export function InvoiceDetails({
         {(hasAdditionalCharges || isEditing) && (
           <>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-md font-medium">Additional Charges</h3>
+              <h3 className="text-md font-medium">
+                Additional Charges Details
+              </h3>
               {isEditing && (
                 <Button
                   type="button"
@@ -389,6 +375,26 @@ export function InvoiceDetails({
             ) : null}
           </>
         )}
+
+        <Separator className="my-6" />
+
+        <div className="space-y-2">
+          <Label htmlFor="total-amount" className="text-lg font-medium">
+            Total Amount
+          </Label>
+          <Input
+            id="total-amount"
+            name="totalAmount"
+            type="number"
+            value={`${(
+              invoice.subTotalAmount +
+              (invoice.taxAmount ?? 0) +
+              additionalChargesTotal
+            ).toFixed(2)}`}
+            disabled
+            className="font-bold"
+          />
+        </div>
       </CardContent>
     </Card>
   );
