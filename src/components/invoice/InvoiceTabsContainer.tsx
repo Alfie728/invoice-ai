@@ -76,9 +76,23 @@ function InvoiceContent({
     });
 
   const handleSaveChanges = () => {
+    // Make sure we're explicitly extracting and including additionalCharges in the mutation
+    const {
+      invoiceLineItem,
+      subTotalAmount,
+      totalAmount,
+      ...invoiceDetailsToUpdate
+    } = invoiceDetails;
+
+    // Log what's being sent to help with debugging
+    console.log(
+      "Saving invoice with additionalCharges:",
+      invoiceDetailsToUpdate.additionalCharges,
+    );
+
     updateInvoiceWithLineItems({
       id: initialInvoice.id,
-      invoiceDetails: invoiceDetails,
+      invoiceDetails: invoiceDetailsToUpdate,
       lineItems: lineItems,
     });
   };

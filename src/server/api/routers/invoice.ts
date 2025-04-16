@@ -29,6 +29,7 @@ const updateInvoiceWithLineItemsInput = z.object({
       apAccount: z.string().nullable().optional(),
       cashAccount: z.string().nullable().optional(),
       expenseType: z.string().nullable().optional(),
+      additionalCharges: z.any().optional(),
     })
     .partial(),
   lineItems: z.array(lineItemSchema).optional(),
@@ -270,6 +271,7 @@ export const invoiceRouter = createTRPCRouter({
           apAccount: z.string().nullable().optional(),
           cashAccount: z.string().nullable().optional(),
           expenseType: z.string().nullable().optional(),
+          additionalCharges: z.any().optional(),
         }),
       }),
     )
