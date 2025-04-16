@@ -150,9 +150,12 @@ function InvoiceContent({
   };
 
   const handleAddLineItem = () => {
+    const tempId = `temp-${Date.now()}`;
+
     setLineItems([
       ...lineItems,
       {
+        id: tempId,
         description: "",
         quantity: 0,
         unitPrice: 0,
@@ -168,9 +171,13 @@ function InvoiceContent({
 
   const handleDeleteLineItem = (id: string) => {
     setLineItems(lineItems.filter((item) => item.id !== id));
-    setSubTotalAmount(
-      lineItems.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0),
+
+    const updatedLineItems = lineItems.filter((item) => item.id !== id);
+    const newSubTotal = updatedLineItems.reduce(
+      (acc, item) => acc + item.unitPrice * item.quantity,
+      0,
     );
+    setSubTotalAmount(newSubTotal);
   };
 
   return (
