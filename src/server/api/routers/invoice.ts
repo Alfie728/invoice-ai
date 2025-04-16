@@ -22,7 +22,7 @@ const updateInvoiceWithLineItemsInput = z.object({
       invoiceDate: z.date().optional(),
       invoiceDueDate: z.date().nullable().optional(),
       vendorName: z.string().optional(),
-      taxAmount: z.number().nullable().optional(),
+      taxAmount: z.number().optional(),
       vendorCode: z.string().nullable().optional(),
       propertyCode: z.string().nullable().optional(),
       invoiceCurrency: z.nativeEnum(InvoiceCurrency).optional(),
@@ -239,7 +239,10 @@ export const invoiceRouter = createTRPCRouter({
       // Update the invoice with proper nested update format
       const updatedInvoice = await ctx.db.invoice.update({
         where: { id },
-        data,
+        data: {
+          ...data,
+          taxAmount: data.taxAmount ?? 0,
+        },
       });
 
       return updatedInvoice;

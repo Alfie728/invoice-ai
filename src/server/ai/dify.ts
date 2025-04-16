@@ -180,6 +180,10 @@ export async function processInvoice(
             emailAddress: invoiceSenderEmail,
           },
         },
+        additionalCharges: result.additionalCharges?.map((charge) => ({
+          chargeName: charge.chargeName,
+          amount: charge.amount,
+        })),
       },
     });
   });
