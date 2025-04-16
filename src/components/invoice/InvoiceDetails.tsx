@@ -7,7 +7,12 @@ import { Separator } from "@/components/ui/separator";
 import type { Invoice } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Info, Eye } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 // Define the AdditionalCharge type to match the schema
 type AdditionalCharge = {
@@ -29,6 +34,7 @@ export function InvoiceDetails({
   onInvoiceChange,
 }: InvoiceDetailsProps) {
   const [localInvoice, setLocalInvoice] = useState(invoice);
+  const [showAdditionalCharges, setShowAdditionalCharges] = useState(false);
 
   const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
@@ -88,6 +94,9 @@ export function InvoiceDetails({
       ...localInvoice,
       additionalCharges: updatedCharges,
     };
+
+    // Auto-open the additional charges section when adding a new charge
+    setShowAdditionalCharges(true);
 
     setLocalInvoice(updatedInvoice);
     onInvoiceChange(updatedInvoice);
@@ -280,9 +289,21 @@ export function InvoiceDetails({
 
           {additionalChargesTotal > 0 && (
             <div className="space-y-2">
-              <Label htmlFor="additional-charges-total">
-                Additional Charges Total
-              </Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="additional-charges-total">
+                  Additional Charges Total
+                </Label>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() =>
+                    setShowAdditionalCharges(!showAdditionalCharges)
+                  }
+                >
+                  <Eye className="text-muted-foreground h-4 w-4" />
+                </Button>
+              </div>
               <Input
                 id="additional-charges-total"
                 type="number"
@@ -292,88 +313,95 @@ export function InvoiceDetails({
             </div>
           )}
         </div>
-        <Separator className="my-6" />
 
-        {/* Additional Charges Section */}
+        {/* Additional Charges Section in a Collapsible */}
         {(hasAdditionalCharges || isEditing) && (
-          <>
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-md font-medium">
-                Additional Charges Details
-              </h3>
-              {isEditing && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addAdditionalCharge}
-                >
-                  <Plus className="mr-1 h-4 w-4" />
-                  Add Charge
-                </Button>
-              )}
-            </div>
-
-            {hasAdditionalCharges ? (
-              <div className="mb-6 space-y-4">
-                {(localInvoice.additionalCharges as AdditionalCharge[]).map(
-                  (charge, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="flex-1 space-y-2">
-                        <Label htmlFor={`charge-name-${index}`}>Name</Label>
-                        <Input
-                          id={`charge-name-${index}`}
-                          value={charge.chargeName}
-                          onChange={(e) =>
-                            handleAdditionalChargeChange(
-                              index,
-                              "chargeName",
-                              e.target.value,
-                            )
-                          }
-                          disabled={!isEditing}
-                        />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <Label htmlFor={`charge-amount-${index}`}>Amount</Label>
-                        <Input
-                          id={`charge-amount-${index}`}
-                          type="number"
-                          value={charge.amount}
-                          onChange={(e) =>
-                            handleAdditionalChargeChange(
-                              index,
-                              "amount",
-                              e.target.value,
-                            )
-                          }
-                          disabled={!isEditing}
-                        />
-                      </div>
-                      {isEditing && (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="mt-8"
-                          onClick={() => removeAdditionalCharge(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ),
+          <Collapsible
+            open={showAdditionalCharges}
+            onOpenChange={setShowAdditionalCharges}
+          >
+            <CollapsibleContent>
+              <Separator className="my-6" />
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-md font-medium">
+                  Additional Charges Details
+                </h3>
+                {isEditing && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addAdditionalCharge}
+                  >
+                    <Plus className="mr-1 h-4 w-4" />
+                    Add Charge
+                  </Button>
                 )}
               </div>
-            ) : isEditing ? (
-              <div className="bg-muted/50 mb-6 rounded-md p-4 text-center">
-                <p className="text-muted-foreground text-sm">
-                  No additional charges. Click &quot;Add Charge&quot; to add
-                  one.
-                </p>
-              </div>
-            ) : null}
-          </>
+
+              {hasAdditionalCharges ? (
+                <div className="mb-6 space-y-4">
+                  {(localInvoice.additionalCharges as AdditionalCharge[]).map(
+                    (charge, index) => (
+                      <div key={index} className="flex items-start gap-4">
+                        <div className="flex-1 space-y-2">
+                          <Label htmlFor={`charge-name-${index}`}>Name</Label>
+                          <Input
+                            id={`charge-name-${index}`}
+                            value={charge.chargeName}
+                            onChange={(e) =>
+                              handleAdditionalChargeChange(
+                                index,
+                                "chargeName",
+                                e.target.value,
+                              )
+                            }
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <Label htmlFor={`charge-amount-${index}`}>
+                            Amount
+                          </Label>
+                          <Input
+                            id={`charge-amount-${index}`}
+                            type="number"
+                            value={charge.amount}
+                            onChange={(e) =>
+                              handleAdditionalChargeChange(
+                                index,
+                                "amount",
+                                e.target.value,
+                              )
+                            }
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        {isEditing && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="mt-8"
+                            onClick={() => removeAdditionalCharge(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ),
+                  )}
+                </div>
+              ) : isEditing ? (
+                <div className="bg-muted/50 mb-6 rounded-md p-4 text-center">
+                  <p className="text-muted-foreground text-sm">
+                    No additional charges. Click &quot;Add Charge&quot; to add
+                    one.
+                  </p>
+                </div>
+              ) : null}
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         <Separator className="my-6" />
