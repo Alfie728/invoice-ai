@@ -1,0 +1,146 @@
+{
+  "name": "invoice_extraction_schema",
+  "description": "Schema for extracting structured data from invoice PDFs",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "invoiceNumber": {
+        "type": "string",
+        "description": "The invoice's unique identifier"
+      },
+      "invoiceDate": {
+        "type": "string",
+        "description": "The date the invoice was issued in YYYY-MM-DD format"
+      },
+      "invoiceDueDate": {
+        "type": ["string", "null"],
+        "description": "The payment due date in YYYY-MM-DD format"
+      },
+      "vendorName": {
+        "type": "string",
+        "description": "The name of the vendor/supplier who issued the invoice"
+      },
+      "taxAmount": {
+        "type": "number",
+        "description": "The tax amount on the invoice"
+      },
+      "totalAmount": {
+        "type": "number",
+        "description": "The total amount including tax"
+      },
+      "vendorCode": {
+        "type": ["string", "null"],
+        "description": "The vendor code if available"
+      },
+      "propertyCode": {
+        "type": ["string", "null"],
+        "description": "The property code if applicable"
+      },
+      "invoiceCurrency": {
+        "type": "string",
+        "description": "The currency code of the invoice",
+        "enum": [
+          "USD",
+          "CAD",
+          "EUR",
+          "GBP",
+          "AUD",
+          "NZD",
+          "CHF",
+          "JPY",
+          "CNY",
+          "INR",
+          "MXN",
+          "BRL",
+          "ARS",
+          "COP",
+          "PHP",
+          "IDR",
+          "ZAR",
+          "RUB",
+          "KRW",
+          "HKD",
+          "SGD",
+          "MYR",
+          "BDT",
+          "PKR",
+          "SAR"
+        ]
+      },
+      "apAccount": {
+        "type": ["string", "null"],
+        "description": "The accounts payable account code if available"
+      },
+      "cashAccount": {
+        "type": ["string", "null"],
+        "description": "The cash account code if available"
+      },
+      "expenseType": {
+        "type": ["string", "null"],
+        "description": "The type of expense if identified"
+      },
+      "lineItems": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "Description of the item or service"
+            },
+            "quantity": {
+              "type": "number",
+              "description": "Quantity of items"
+            },
+            "unitPrice": {
+              "type": "number",
+              "description": "Price per unit"
+            },
+            "glCode": {
+              "type": ["string", "null"],
+              "description": "General ledger code for this item if available"
+            }
+          },
+          "required": ["description", "quantity", "unitPrice", "glCode"],
+          "additionalProperties": false
+        }
+      },
+      "additionalCharges": {
+        "type": ["array", "null"],
+        "items": {
+          "type": "object",
+          "properties": {
+            "chargeName": {
+              "type": "string",
+              "description": "Name of the additional charge (e.g. ESL, FSL, Stamp Duty) if identified"
+            },
+            "amount": {
+              "type": "number",
+              "description": "Amount charged for this item if identified"
+            }
+          },
+          "required": ["chargeName", "amount"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "invoiceNumber",
+      "invoiceDate",
+      "invoiceDueDate",
+      "vendorName",
+      "taxAmount",
+      "totalAmount",
+      "vendorCode",
+      "propertyCode",
+      "invoiceCurrency",
+      "apAccount",
+      "cashAccount",
+      "expenseType",
+      "lineItems",
+      "additionalCharges"
+    ],
+    "additionalProperties": false
+  }
+}

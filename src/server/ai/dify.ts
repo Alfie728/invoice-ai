@@ -65,7 +65,6 @@ export type ParsedInvoiceData = {
   invoiceDueDate: string | null;
   vendorName: string;
   taxAmount: number;
-  subTotalAmount: number;
   totalAmount: number;
   vendorCode: string | null;
   propertyCode: string | null;
@@ -77,9 +76,12 @@ export type ParsedInvoiceData = {
     description: string;
     quantity: number;
     unitPrice: number;
-    amount: number;
     glCode: string | null;
   }>;
+  additionalCharges: Array<{
+    chargeName: string;
+    amount: number;
+  }> | null;
 };
 
 async function runWorkflow(fileId: string): Promise<DifyWorkflowRunResponse> {
@@ -121,27 +123,22 @@ export async function processInvoice(
   console.log("Workflow run:", workflowRunResponse);
 
   // Parse the JSON string from the text output
-  const rawData = JSON.parse(
+  const result = JSON.parse(
     workflowRunResponse.data.outputs.text,
   ) as ParsedInvoiceData;
 
-  // Clean up the data - convert string "null" values to actual null
-  const parsedInvoiceData = {
-    ...rawData,
-    invoiceDueDate:
-      rawData.invoiceDueDate === "null" ? null : rawData.invoiceDueDate,
-    vendorCode: rawData.vendorCode === "null" ? null : rawData.vendorCode,
-    propertyCode: rawData.propertyCode === "null" ? null : rawData.propertyCode,
-    apAccount: rawData.apAccount === "null" ? null : rawData.apAccount,
-    cashAccount: rawData.cashAccount === "null" ? null : rawData.cashAccount,
-    expenseType: rawData.expenseType === "null" ? null : rawData.expenseType,
-    lineItems: rawData.lineItems.map((item) => ({
-      ...item,
-      glCode: item.glCode === "null" ? null : item.glCode,
-    })),
-  } as ParsedInvoiceData;
+  console.log(
+    "Raw invoiceDueDate:",
+    result.invoiceDueDate,
+    typeof result.invoiceDueDate,
+  );
+  console.log("Raw vendorCode:", result.vendorCode, typeof result.vendorCode);
 
-  console.log("Parsed invoice data:", parsedInvoiceData);
+  console.log(
+    "Raw additionalCharges:",
+    result.additionalCharges,
+    typeof result.additionalCharges,
+  );
 
   const invoice = await db.$transaction(async (tx) => {
     await tx.invoiceSender.upsert({
@@ -157,23 +154,21 @@ export async function processInvoice(
 
     return tx.invoice.create({
       data: {
-        invoiceNumber: parsedInvoiceData.invoiceNumber,
-        invoiceDate: parsedInvoiceData.invoiceDate
-          ? new Date(parsedInvoiceData.invoiceDate)
-          : "",
-        invoiceDueDate: parsedInvoiceData.invoiceDueDate
-          ? new Date(parsedInvoiceData.invoiceDueDate)
+        invoiceNumber: result.invoiceNumber,
+        invoiceDate: result.invoiceDate ? new Date(result.invoiceDate) : "",
+        invoiceDueDate: result.invoiceDueDate
+          ? new Date(result.invoiceDueDate)
           : null,
-        vendorName: parsedInvoiceData.vendorName,
-        taxAmount: parsedInvoiceData.taxAmount,
-        vendorCode: parsedInvoiceData.vendorCode,
-        propertyCode: parsedInvoiceData.propertyCode,
-        invoiceCurrency: parsedInvoiceData.invoiceCurrency as InvoiceCurrency,
-        apAccount: parsedInvoiceData.apAccount,
-        cashAccount: parsedInvoiceData.cashAccount,
-        expenseType: parsedInvoiceData.expenseType,
+        vendorName: result.vendorName,
+        taxAmount: result.taxAmount,
+        vendorCode: result.vendorCode,
+        propertyCode: result.propertyCode,
+        invoiceCurrency: result.invoiceCurrency as InvoiceCurrency,
+        apAccount: result.apAccount,
+        cashAccount: result.cashAccount,
+        expenseType: result.expenseType,
         invoiceLineItem: {
-          create: parsedInvoiceData.lineItems.map((lineItem) => ({
+          create: result.lineItems.map((lineItem) => ({
             description: lineItem.description,
             quantity: lineItem.quantity,
             unitPrice: lineItem.unitPrice,

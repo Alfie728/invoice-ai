@@ -87,29 +87,30 @@ model InvoiceSender {
 }
 
 model Invoice {
-    id              String            @id @default(cuid())
-    createdAt       DateTime          @default(now())
-    updatedAt       DateTime          @updatedAt
+    id                String            @id @default(cuid())
+    createdAt         DateTime          @default(now())
+    updatedAt         DateTime          @updatedAt
     // Status of the invoice 
-    invoiceStatus   InvoiceStatus     @default(PENDING)
+    invoiceStatus     InvoiceStatus     @default(PENDING)
     // Invoice Information
-    invoiceNumber   String
-    invoiceDate     DateTime
-    invoiceDueDate  DateTime? // Made optional as not all invoices have due dates
-    vendorName      String
-    taxAmount       Float? // Made optional as not all invoices have tax
+    invoiceNumber     String
+    invoiceDate       DateTime
+    invoiceDueDate    DateTime? // Made optional as not all invoices have due dates
+    vendorName        String
+    taxAmount         Float // If no tax is available, set to 0
+    additionalCharges Json? // Made optional as not all invoices have additional charges
     // Coding Information
-    vendorCode      String? // Made optional as might not be available for all vendors
-    propertyCode    String? // Made optional as might not apply to all invoices
-    invoiceCurrency InvoiceCurrency   @default(USD) // Added default value
-    apAccount       String? // Made optional as might not be available initially
-    cashAccount     String? // Made optional as might not be available initially
-    expenseType     String? // Made optional as might not be available initially
+    vendorCode        String? // Made optional as might not be available for all vendors
+    propertyCode      String? // Made optional as might not apply to all invoices
+    invoiceCurrency   InvoiceCurrency   @default(USD) // Added default value
+    apAccount         String? // Made optional as might not be available initially
+    cashAccount       String? // Made optional as might not be available initially
+    expenseType       String? // Made optional as might not be available initially
     // Line Items
-    invoiceLineItem InvoiceLineItem[]
+    invoiceLineItem   InvoiceLineItem[]
     // Relations
-    invoiceSender   InvoiceSender?    @relation(fields: [invoiceSenderId], references: [id])
-    invoiceSenderId String? // Foreign key to InvoiceSender
+    invoiceSender     InvoiceSender?    @relation(fields: [invoiceSenderId], references: [id])
+    invoiceSenderId   String? // Foreign key to InvoiceSender
 
     @@index([invoiceStatus]) // Index status for filtering
     @@index([invoiceDate]) // Index date for sorting and filtering
