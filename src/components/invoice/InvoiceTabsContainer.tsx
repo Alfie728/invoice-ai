@@ -63,7 +63,7 @@ function InvoiceContent({
   }, []);
 
   const utils = api.useUtils();
-  const { mutate: updateInvoiceWithLineItems } =
+  const { mutate: updateInvoiceWithLineItems, isPending: isUpdating } =
     api.invoice.updateInvoiceWithLineItems.useMutation({
       onSuccess: () => {
         toast.success("Invoice updated successfully");
@@ -193,6 +193,23 @@ function InvoiceContent({
     );
     setSubTotalAmount(newSubTotal);
   };
+
+  if (isUpdating) {
+    return (
+      <>
+        <InvoiceHeader
+          invoice={invoiceDetails}
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
+          onSave={handleSaveChanges}
+          onCancel={handleCancelEdit}
+          onApprove={handleApproveInvoice}
+          onReject={handleRejectInvoice}
+        />
+        <InvoiceLoadingSkeleton />
+      </>
+    );
+  }
 
   return (
     <>
