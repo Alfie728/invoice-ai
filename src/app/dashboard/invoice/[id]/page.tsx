@@ -1,4 +1,5 @@
 import { InvoiceTabsContainer } from "@/components/invoice/InvoiceTabsContainer";
+import { api, HydrateClient } from "@/trpc/server";
 
 export default async function InvoiceDetailPage({
   params,
@@ -7,9 +8,13 @@ export default async function InvoiceDetailPage({
 }) {
   const { id } = await params;
 
+  await api.invoice.getInvoiceById.prefetch({ id });
+
   return (
-    <div className="container mx-auto px-8 py-6">
-      <InvoiceTabsContainer invoiceId={id} />
-    </div>
+    <HydrateClient>
+      <div className="container mx-auto px-8 py-6">
+        <InvoiceTabsContainer invoiceId={id} />
+      </div>
+    </HydrateClient>
   );
 }
