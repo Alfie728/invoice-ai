@@ -42,7 +42,7 @@ type RawInvoiceWithTotal = Invoice & {
 };
 
 export const invoiceRouter = createTRPCRouter({
-  getAllInvoices: publicProcedure
+  all: publicProcedure
     .input(
       z.object({
         senderEmail: z.string().optional(),
@@ -171,7 +171,7 @@ export const invoiceRouter = createTRPCRouter({
       }
     }),
 
-  getInvoiceById: publicProcedure
+  byId: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const invoice = await ctx.db.invoice.findUnique({
@@ -212,7 +212,7 @@ export const invoiceRouter = createTRPCRouter({
       };
     }),
 
-  updateInvoiceWithLineItems: publicProcedure
+  updateWithLineItems: publicProcedure
     .input(updateInvoiceWithLineItemsInput)
     .mutation(async ({ ctx, input }) => {
       const { id, invoiceDetails, lineItems } = input;
@@ -254,7 +254,7 @@ export const invoiceRouter = createTRPCRouter({
       return invoice;
     }),
 
-  updateInvoice: publicProcedure
+  update: publicProcedure
     .input(
       z.object({
         id: z.string(),

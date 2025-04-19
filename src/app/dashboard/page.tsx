@@ -16,14 +16,19 @@ export default function DashboardPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [senderEmail, setSenderEmail] = useState<string | null>(null);
   const debouncedSenderEmail = useDebounce(senderEmail, 1000);
-  const { data: invoices, isLoading } = api.invoice.getAllInvoices.useQuery({
+  const { data: invoices, isLoading } = api.invoice.all.useQuery({
     senderEmail: debouncedSenderEmail ?? undefined,
     sortBy,
     sortOrder,
   });
   const handleSortChange = (sortBy: string, sortOrder: string) => {
-      setSortBy(
-      sortBy as "invoiceDate" | "vendorName" | "totalAmount" | "invoiceStatus" | null,
+    setSortBy(
+      sortBy as
+        | "invoiceDate"
+        | "vendorName"
+        | "totalAmount"
+        | "invoiceStatus"
+        | null,
     );
     setSortOrder(sortOrder as "asc" | "desc" | null);
   };

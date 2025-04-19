@@ -8,7 +8,7 @@ export default async function InvoiceDetailPage({
 }) {
   const { id } = await params;
 
-  await api.invoice.getInvoiceById.prefetch({ id });
+  void api.invoice.byId.prefetch({ id });
 
   return (
     <HydrateClient>

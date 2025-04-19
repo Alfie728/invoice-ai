@@ -21,7 +21,7 @@ interface InvoiceTabsContainerProps {
 
 export function InvoiceTabsContainer({ invoiceId }: InvoiceTabsContainerProps) {
   // Client-side data fetching
-  const { data: invoice, isLoading } = api.invoice.getInvoiceById.useQuery({
+  const { data: invoice, isLoading } = api.invoice.byId.useQuery({
     id: invoiceId,
   });
   // We'll only render the editing components when we have data
@@ -64,10 +64,10 @@ function InvoiceContent({
 
   const utils = api.useUtils();
   const { mutate: updateInvoiceWithLineItems, isPending: isUpdating } =
-    api.invoice.updateInvoiceWithLineItems.useMutation({
+    api.invoice.updateWithLineItems.useMutation({
       onSuccess: () => {
         toast.success("Invoice updated successfully");
-        void utils.invoice.getInvoiceById.invalidate();
+        void utils.invoice.byId.invalidate();
         setIsEditing(false);
       },
       onError: (error) => {

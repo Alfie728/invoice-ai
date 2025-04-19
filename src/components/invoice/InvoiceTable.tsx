@@ -57,11 +57,11 @@ export function InvoiceTable({
 }: InvoiceTableProps) {
   const router = useRouter();
   const utils = api.useUtils();
-  const { mutate: updateInvoice } = api.invoice.updateInvoice.useMutation({
+  const { mutate: updateInvoice } = api.invoice.update.useMutation({
     onMutate: (invoice) => {
       console.log(sortBy, sortOrder);
       // Update the invoice in any lists that might be displayed
-      utils.invoice.getAllInvoices.setData(
+      utils.invoice.all.setData(
         { sortBy: sortBy ?? null, sortOrder: sortOrder ?? null },
         (oldInvoices) => {
           if (!oldInvoices) return oldInvoices;
