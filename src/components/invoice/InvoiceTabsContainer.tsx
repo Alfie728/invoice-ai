@@ -20,16 +20,14 @@ interface InvoiceTabsContainerProps {
 }
 
 export function InvoiceTabsContainer({ invoiceId }: InvoiceTabsContainerProps) {
-  // Client-side data fetching
-  const { data: invoice, isLoading } = api.invoice.byId.useQuery({
+  // Client-side data fetching using useSuspenseQuery
+  const [invoiceData] = api.invoice.byId.useSuspenseQuery({
     id: invoiceId,
   });
-  // We'll only render the editing components when we have data
-  if (isLoading || !invoice) {
-    return <InvoiceLoadingSkeleton />;
-  }
 
-  return <InvoiceContent initialInvoice={invoice} />;
+  // No need for loading check with useSuspenseQuery, Suspense handles it.
+
+  return <InvoiceContent initialInvoice={invoiceData} />;
 }
 
 // Separate component for the actual invoice content
