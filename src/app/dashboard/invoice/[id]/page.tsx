@@ -12,7 +12,7 @@ export default async function InvoiceDetailPage({
 }) {
   const { id } = await params;
 
-  void api.invoice.byId({ id });
+  void api.invoice.byId.prefetch({ id });
 
   return (
     <HydrateClient>

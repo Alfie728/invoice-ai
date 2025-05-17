@@ -21,12 +21,7 @@ interface InvoiceTabsContainerProps {
 
 export function InvoiceTabsContainer({ invoiceId }: InvoiceTabsContainerProps) {
   // Client-side data fetching using useSuspenseQuery
-  const [invoiceData] = api.invoice.byId.useSuspenseQuery(
-    { id: invoiceId },
-    {
-      retry: false,
-    },
-  );
+  const [invoiceData] = api.invoice.byId.useSuspenseQuery({ id: invoiceId });
 
   // No need for loading check with useSuspenseQuery, Suspense handles it.
 
