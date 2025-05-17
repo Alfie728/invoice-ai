@@ -1,4 +1,4 @@
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { InvoiceCurrency, InvoiceStatus, Prisma } from "@prisma/client";
 import type { Invoice, InvoiceLineItem } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
@@ -216,6 +216,13 @@ export const invoiceRouter = createTRPCRouter({
     .input(updateInvoiceWithLineItemsInput)
     .mutation(async ({ ctx, input }) => {
       const { id, invoiceDetails, lineItems } = input;
+
+      if (!lineItems) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Line items are required",
+        });
+      }
 
       const invoice = await ctx.db.invoice.update({
         where: { id },

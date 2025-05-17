@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 interface NavItem {
   title: string;
@@ -114,6 +115,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </aside>
         <main className="flex-1">{children}</main>
       </div>
+      <ReactQueryDevtools />
     </div>
   );
 }
