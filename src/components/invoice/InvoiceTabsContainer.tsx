@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InvoiceDetails } from "./InvoiceDetails";
 import { LineItems } from "./LineItems";
@@ -20,25 +20,38 @@ interface InvoiceTabsContainerProps {
 }
 
 export function InvoiceTabsContainer({ invoiceId }: InvoiceTabsContainerProps) {
-  // Client-side data fetching using useSuspenseQuery
-  const [invoiceData] = api.invoice.byId.useSuspenseQuery({ id: invoiceId });
+  const [readyToFetch, setReadyToFetch] = useState(false);
 
-  // No need for loading check with useSuspenseQuery, Suspense handles it.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setReadyToFetch(true);
+    }, 2000); // 2-second delay
 
-  return <InvoiceContent initialInvoice={invoiceData} />;
+    return () => clearTimeout(timer); // Cleanup timer on component unmount
+  }, []);
+
+  // Conditionally render a loading state or null while not readyToFetch
+  if (!readyToFetch) {
+    // You can return a more sophisticated loading skeleton or null
+    return <InvoiceLoadingSkeleton />; // Or return null, or a specific loading component
+  }
+
+  return <InvoiceContent invoiceId={invoiceId} />;
 }
 
 // Separate component for the actual invoice content
-function InvoiceContent({
-  initialInvoice,
-}: {
-  initialInvoice: Invoice & {
-    subTotalAmount: number;
-    totalAmount: number;
-  } & {
-    invoiceLineItem: InvoiceLineItem[];
-  };
-}) {
+interface InvoiceContentProps {
+  invoiceId: string;
+}
+
+function InvoiceContent({ invoiceId }: InvoiceContentProps) {
+  const [initialInvoice] = api.invoice.byId.useSuspenseQuery(
+    { id: invoiceId },
+    {
+      retry: false,
+    },
+  );
+
   const [isEditing, setIsEditing] = useState(false);
   const [subTotalAmount, setSubTotalAmount] = useState(
     initialInvoice.invoiceLineItem.reduce(

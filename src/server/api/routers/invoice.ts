@@ -171,7 +171,7 @@ export const invoiceRouter = createTRPCRouter({
       }
     }),
 
-  byId: publicProcedure
+  byId: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const invoice = await ctx.db.invoice.findUnique({

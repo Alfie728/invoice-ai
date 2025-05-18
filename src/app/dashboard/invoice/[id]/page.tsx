@@ -1,18 +1,30 @@
 import { InvoiceTabsContainer } from "@/components/invoice/InvoiceTabsContainer";
-import { api, HydrateClient } from "@/trpc/server";
+import { api, HydrateClient, getQueryClient } from "@/trpc/server";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { InvoiceErrorFallback } from "@/components/error/InvoiceErrorFallback";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
+import { TRPCError } from "@trpc/server";
 export default async function InvoiceDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const queryClient = getQueryClient();
 
-  void api.invoice.byId.prefetch({ id });
+  try {
+    await queryClient.fetchQuery(api.invoice.byId.queryOptions({ id }));
+  } catch (error) {
+    if (error instanceof TRPCError && error.code === "NOT_FOUND") {
+      return <div>Invoice not found</div>;
+    }
+    if (error instanceof TRPCError && error.code === "UNAUTHORIZED") {
+      return <div>Unauthorized</div>;
+    }
+    console.error(error);
+    throw error;
+  }
 
   return (
     <HydrateClient>

@@ -4,7 +4,13 @@ import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { httpBatchStreamLink, loggerLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
-import { useState } from "react";
+
+import {
+  createTRPCOptionsProxy,
+  type TRPCOptionsProxy,
+} from "@trpc/tanstack-react-query";
+
+import { createContext, useContext, useState } from "react";
 import SuperJSON from "superjson";
 
 import { type AppRouter } from "@/server/api/root";
@@ -18,7 +24,6 @@ const getQueryClient = () => {
   }
   // Browser: use singleton pattern to keep the same query client
   clientQueryClientSingleton ??= createQueryClient();
-
   return clientQueryClientSingleton;
 };
 
@@ -62,14 +67,33 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
     }),
   );
 
+  const [optionsProxy] = useState(() =>
+    createTRPCOptionsProxy<AppRouter>({ client: trpcClient, queryClient }),
+  );
+
   return (
     <QueryClientProvider client={queryClient}>
       <api.Provider client={trpcClient} queryClient={queryClient}>
-        {props.children}
+        <TrpcInteropContext.Provider
+          value={{
+            optionsProxy,
+          }}
+        >
+          {props.children}
+        </TrpcInteropContext.Provider>
       </api.Provider>
     </QueryClientProvider>
   );
 }
+
+const TrpcInteropContext = createContext<{
+  optionsProxy: TRPCOptionsProxy<AppRouter>;
+}>(null!);
+
+export const useTRPC = () => {
+  const { optionsProxy } = useContext(TrpcInteropContext);
+  return optionsProxy;
+};
 
 function getBaseUrl() {
   if (typeof window !== "undefined") return window.location.origin;
